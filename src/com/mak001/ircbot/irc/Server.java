@@ -52,7 +52,7 @@ public class Server {
 		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
 				socket.getOutputStream()));
 		input = new InputThread(bot, reader);
-		output = new OutputThread(bot, writer);
+		output = new OutputThread(writer);
 
 		log("Starting input");
 		input.start();

@@ -3,6 +3,8 @@ package com.mak001.ircbot.irc;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.json.JSONObject;
+
 /**
  * A user object. Used to store what modes a user has.
  * 
@@ -12,15 +14,32 @@ public class User {
 
 	private String nick;
 	private final List<Mode> MODES = new ArrayList<Mode>();
+	private final List<String> permissions;
+
+	public static String NAME = "NAME";
+	public static String PERMISSIONS = "PERMISSIONS";
 
 	/**
-	 * Creates a user
+	 * Creates a user without any permissions
 	 * 
 	 * @param nick
 	 *            - The nick the user has at the creation of the user object.
 	 */
 	public User(String nick) {
+		this(nick, new ArrayList<String>());
+	}
+
+	/**
+	 * Creates a user with the given set of permissions
+	 * 
+	 * @param nick
+	 *            - The nick the user has at the creation of the user object.
+	 * @param perms
+	 *            - The ArrayList of permissions the user will have.
+	 */
+	public User(String nick, List<String> perms) {
 		this.nick = nick;
+		permissions = perms;
 	}
 
 	/**
@@ -34,6 +53,20 @@ public class User {
 		String oldNick = nick;
 		nick = newNick;
 		return oldNick;
+	}
+
+	/**
+	 * @return - The nick of the user
+	 */
+	public String getNick() {
+		return nick;
+	}
+
+	/**
+	 * @return - The nick of the user
+	 */
+	public String getName() {
+		return nick;
 	}
 
 	/**
@@ -110,6 +143,63 @@ public class User {
 	 */
 	public boolean removeModes(List<Mode> modeList) {
 		return MODES.removeAll(modeList);
+	}
+
+	// TODO
+	public List<String> getPermissions() {
+		return permissions;
+	}
+
+	// TODO
+	public boolean addPermission(String permission) {
+		if (permissions.contains(permission))
+			return false;
+		return permissions.add(permission);
+	}
+
+	// TODO
+	public boolean removePermission(String permission) {
+		if (permissions.contains(permission))
+			return false;
+		return permissions.remove(permission);
+	}
+
+	/**
+	 * 
+	 * @param permission
+	 *            - The permission to check for
+	 * @return - If the user has the permission
+	 */
+	public boolean hasPermission(String permission) {
+		if (permission == null || permission.equals(""))
+			return true;
+		return getPermissions().contains(permission);
+	}
+
+	/**
+	 * Creates and returns a JSONObject if, and only if, the user has at least
+	 * on permission.
+	 * 
+	 * @return - A JSONObject if the user has at least one permission, otherwise
+	 *         it returns null.
+	 */
+	public JSONObject getSaveObject() {
+		if (permissions.isEmpty())
+			return null;
+		JSONObject obj = new JSONObject();
+		obj.put(NAME, nick);
+		obj.put(PERMISSIONS, permissions);
+		return obj;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o)
+			return true;
+		if (o instanceof User)
+			if (((User) o).getName().equalsIgnoreCase(nick))
+				return true;
+		return false;
 	}
 
 	/**

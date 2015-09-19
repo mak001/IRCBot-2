@@ -9,6 +9,7 @@ import java.util.StringTokenizer;
 import com.mak001.ircbot.Boot;
 import com.mak001.ircbot.IRCBot;
 import com.mak001.ircbot.irc.Server;
+import com.mak001.ircbot.irc.io.Logger.LogType;
 
 public class InputThread extends Thread {
 
@@ -33,7 +34,7 @@ public class InputThread extends Thread {
 						try {
 							Boot.getLogger()
 									.log(Logger.LogType.IRC, ">" + line);
-							// handle line
+							bot.handleLine(line);
 						} catch (Throwable t) {
 							// Stick the whole stack trace into a String so we
 							// can output it nicely.
@@ -43,19 +44,13 @@ public class InputThread extends Thread {
 							pw.flush();
 							StringTokenizer tokenizer = new StringTokenizer(
 									sw.toString(), "\r\n");
-							/*
-							 * synchronized (bot) { bot.log(
-							 * "### Your implementation of PircBot is faulty and you have"
-							 * ); bot.log(
-							 * "### allowed an uncaught Exception or Error to propagate in your"
-							 * ); bot.log(
-							 * "### code. It may be possible for PircBot to continue operating"
-							 * ); bot.log(
-							 * "### normally. Here is the stack trace that was produced: -"
-							 * ); bot.log("### "); while
-							 * (tokenizer.hasMoreTokens()) { bot.log("### " +
-							 * tokenizer.nextToken()); } }
-							 */
+
+							Boot.getLogger().log(LogType.BOT,
+									"### An error occured. Please fix this.");
+							while (tokenizer.hasMoreTokens()) {
+								Boot.getLogger().log(LogType.BOT,
+										"### " + tokenizer.nextToken());
+							}
 						}
 					}
 					if (line == null) {

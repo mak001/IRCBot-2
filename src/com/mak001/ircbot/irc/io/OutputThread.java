@@ -3,16 +3,13 @@ package com.mak001.ircbot.irc.io;
 import java.io.BufferedWriter;
 
 import com.mak001.ircbot.Boot;
-import com.mak001.ircbot.IRCBot;
 
 public class OutputThread extends Thread {
 
-	private IRCBot bot;
 	private BufferedWriter writer;
 	private Queue queue;
 
-	public OutputThread(IRCBot bot, BufferedWriter writer) {
-		this.bot = bot;
+	public OutputThread(BufferedWriter writer) {
 		this.writer = writer;
 		queue = new Queue();
 	}

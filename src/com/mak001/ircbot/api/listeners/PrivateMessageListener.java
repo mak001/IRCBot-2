@@ -1,5 +1,7 @@
 package com.mak001.ircbot.api.listeners;
 
+import com.mak001.ircbot.irc.plugin.Listener;
+
 /**
  * Listens for private messages.
  * 
