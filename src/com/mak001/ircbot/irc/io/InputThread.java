@@ -8,15 +8,18 @@ import java.util.StringTokenizer;
 
 import com.mak001.ircbot.Boot;
 import com.mak001.ircbot.IRCBot;
+import com.mak001.ircbot.irc.Server;
 
 public class InputThread extends Thread {
 
-	private IRCBot bot;
+	private final IRCBot bot;
 	private BufferedReader reader;
+	private Server server;
 
 	public InputThread(IRCBot bot, BufferedReader reader) {
 		this.bot = bot;
 		this.reader = reader;
+		this.server = bot.getServer();
 	}
 
 	@Override
@@ -59,8 +62,8 @@ public class InputThread extends Thread {
 						running = false;
 					}
 				} catch (InterruptedIOException iioe) {
-					// this.sendRawLine("PING "
-					// + (System.currentTimeMillis() / 1000));
+					server.getOutputThread().sendRawLine(
+							"PING " + (System.currentTimeMillis() / 1000));
 				}
 			}
 		} catch (Exception e) {

@@ -6,8 +6,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
+import java.net.UnknownHostException;
 
 import com.mak001.ircbot.Boot;
+import com.mak001.ircbot.IRCBot;
 import com.mak001.ircbot.irc.io.InputThread;
 import com.mak001.ircbot.irc.io.Logger;
 import com.mak001.ircbot.irc.io.OutputThread;
@@ -17,36 +19,52 @@ public class Server {
 
 	private final int port;
 	private final String host;
-	private final String password;
+	private final String serverPassword;
+	private final String botNick;
+	private final String botPassword;
+	private final IRCBot bot;
 
-	private final Socket socket;
-	private final InputThread input;
-	private final OutputThread output;
+	private Socket socket;
+	private InputThread input;
+	private OutputThread output;
 
-	public Server(String host, int port) throws IOException {
-		this(host, port, "");
+	public Server(IRCBot bot, String botNick, String botPassword, String host,
+			int port) throws IOException {
+		this(bot, botNick, botPassword, host, port, "");
 	}
 
-	public Server(String host, int port, String password) throws IOException {
+	public Server(IRCBot bot, String botNick, String botPassword, String host,
+			int port, String serverPassword) throws IOException {
+		this.bot = bot;
 		this.host = host;
 		this.port = port;
-		this.password = password;
-		Boot.getLogger().log(Logger.LogType.BOT, "Creating socket");
+		this.botNick = botNick;
+		this.botPassword = botPassword;
+		this.serverPassword = serverPassword;
+		connect();
+	}
+
+	private void connect() throws UnknownHostException, IOException {
+		log("Creating socket");
 		socket = new Socket(host, port);
 		BufferedReader reader = new BufferedReader(new InputStreamReader(
 				socket.getInputStream()));
 		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
 				socket.getOutputStream()));
-		input = new InputThread(null, reader);
-		output = new OutputThread(null, writer);
-		Boot.getLogger().log(Logger.LogType.BOT, "Starting input");
+		input = new InputThread(bot, reader);
+		output = new OutputThread(bot, writer);
+
+		log("Starting input");
 		input.start();
-		Boot.getLogger().log(Logger.LogType.BOT, "Starting output");
+		log("Starting output");
 		output.start();
 
-		if (password != null && !password.equals("")) {
-			output.sendRawLine("PASS " + password);
+		if (serverPassword != null && !serverPassword.equals("")) {
+			output.sendRawLine("PASS " + serverPassword);
 		}
+
+		output.sendRawLine("NICK " + botNick);
+		output.sendRawLine("USER " + IRCBot.ident + " 8 * :" + "V 2.0");
 	}
 
 	public InputThread getInputThread() {
@@ -59,5 +77,9 @@ public class Server {
 
 	public String getServerName() {
 		return host;
+	}
+
+	private void log(String log) {
+		Boot.getLogger().log(Logger.LogType.BOT, log);
 	}
 }
