@@ -1,0 +1,12 @@
+bin
+doc
+javadocs
+META-INF
+.settings
+.classpath
+.project
+.idea
+*.iml
+out
+*.tmp
+*.class
