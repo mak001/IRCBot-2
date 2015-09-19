@@ -24,6 +24,7 @@ public class IRCBot {
 		try {
 			Boot.getLogger().log(Logger.LogType.BOT, "Starting server");
 			server = new Server(this, "jizz_V2", "", "irc.rizon.net", 6667);
+			out = server.getOutputThread();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
