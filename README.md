@@ -1,4 +1,4 @@
-IRCBot
+IRCBot V2
 ======
 
-An IRC bot written in java
+Going to be based on my orginial bot, but without PIRC as a base. An IRC bot written in java.
