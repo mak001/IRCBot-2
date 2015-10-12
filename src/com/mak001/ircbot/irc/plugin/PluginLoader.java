@@ -15,18 +15,15 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 import com.mak001.ircbot.Boot;
-import com.mak001.ircbot.IRCBot;
 import com.mak001.ircbot.api.Manifest;
 import com.mak001.ircbot.api.Plugin;
 
 public class PluginLoader {
 
 	private final Map<String, String> loaded_plugins = new HashMap<String, String>();
-	private final IRCBot bot;
 	private final PluginManager manager;
 
-	public PluginLoader(IRCBot bot, PluginManager manager) {
-		this.bot = bot;
+	public PluginLoader(PluginManager manager) {
 		this.manager = manager;
 	}
 
@@ -69,7 +66,7 @@ public class PluginLoader {
 	private Plugin addPluginClass(Class<?> clazz, File file) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, IOException {
 		if (isPluginClass(clazz)) {
 			Constructor<?>[] cs = clazz.getConstructors();
-			Object invoke = cs[0].newInstance(bot);
+			Object invoke = cs[0].newInstance();
 			Plugin plugin = (Plugin) (invoke);
 			if (plugin.getManifest() == null) {
 				System.out.println("Failed to load " + file.toString() + ".  No manifest.");

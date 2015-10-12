@@ -18,8 +18,6 @@ public abstract class Plugin {
 	public final String GENERAL_COMMAND;
 
 	/**
-	 * @param bot
-	 *            - Just make your constructor Plugin(IRCBot bot)
 	 * @param GENERAL_COMMAND
 	 *            - The command to respond to
 	 */

@@ -55,7 +55,7 @@ public class PluginManager {
 		listeners.add(privateMessageListeners);
 		listeners.add(quitListeners);
 
-		pluginLoader = new PluginLoader(bot, this);
+		pluginLoader = new PluginLoader(this);
 		commandManager = new CommandManager();
 	}
 
