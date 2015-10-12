@@ -202,10 +202,10 @@ public class PluginManager {
 			return false;
 		if (bot.getPermissionHandler().getUser(sender).hasPermission(command.getPermission())) {
 			if (wasHelp) {
-				command.onHelp(channel, sender, login, hostname);
+				command.onHelp(server, channel, sender, login, hostname);
 				return true;
 			} else {
-				command.onCommand(channel, sender, login, hostname, commandManager.getAdditional(command, message));
+				command.onCommand(server, channel, sender, login, hostname, commandManager.getAdditional(command, message));
 				return true;
 			}
 		}
@@ -234,7 +234,7 @@ public class PluginManager {
 				server.sendMessage(sender, "This will list every commands from " + plugin.getName());
 				for (Command c : commandManager.getCommands(plugin.getName())) {
 					if (bot.getPermissionHandler().getUser(sender).hasPermission(c.getPermission())) {
-						c.onHelp(channel, sender, login, hostname);
+						c.onHelp(server, channel, sender, login, hostname);
 					}
 				}
 				return true;

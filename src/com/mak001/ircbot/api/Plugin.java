@@ -1,7 +1,6 @@
 package com.mak001.ircbot.api;
 
 import com.mak001.ircbot.Boot;
-import com.mak001.ircbot.IRCBot;
 import com.mak001.ircbot.irc.io.Logger.LogType;
 
 /**
@@ -17,7 +16,6 @@ public abstract class Plugin {
 	 * Used for setting up the help and about commands
 	 */
 	public final String GENERAL_COMMAND;
-	protected final IRCBot bot;
 
 	/**
 	 * @param bot
@@ -25,9 +23,8 @@ public abstract class Plugin {
 	 * @param GENERAL_COMMAND
 	 *            - The command to respond to
 	 */
-	public Plugin(IRCBot bot, String GENERAL_COMMAND) {
+	public Plugin(String GENERAL_COMMAND) {
 		this.GENERAL_COMMAND = GENERAL_COMMAND;
-		this.bot = bot;
 	}
 
 	/**
@@ -77,6 +74,17 @@ public abstract class Plugin {
 	 */
 	public final String getCommand() {
 		return GENERAL_COMMAND;
+	}
+
+	/**
+	 * Registers a command
+	 * 
+	 * @param command
+	 *            - The command to register
+	 * @return If the command could be registered
+	 */
+	public final boolean registerCommand(Command command) {
+		return Boot.getBot().getPluginManager().registerCommand(command);
 	}
 
 	/**

@@ -1,5 +1,7 @@
 package com.mak001.ircbot.api;
 
+import com.mak001.ircbot.irc.Server;
+
 public class Command {
 
 	private String[] command;
@@ -104,8 +106,8 @@ public class Command {
 	 * @param hostname
 	 *            - The host name of the sender of the command
 	 */
-	public void onCommand(String channel, String sender, String login, String hostname, String additional) {
-		commandAction.onCommand(channel, sender, login, hostname, additional);
+	public void onCommand(Server server, String channel, String sender, String login, String hostname, String additional) {
+		commandAction.onCommand(server, channel, sender, login, hostname, additional);
 	}
 
 	/**
@@ -122,8 +124,8 @@ public class Command {
 	 * @param hostname
 	 *            - The host name of the sender of the command
 	 */
-	public void onHelp(String channel, String sender, String login, String hostname) {
-		commandAction.onHelp(channel, sender, login, hostname);
+	public void onHelp(Server server, String channel, String sender, String login, String hostname) {
+		commandAction.onHelp(server, channel, sender, login, hostname);
 	}
 
 	/**
@@ -135,6 +137,9 @@ public class Command {
 
 		/**
 		 * What the command does
+		 * 
+		 * @param server
+		 *            - The server the command was issued on
 		 * 
 		 * @param channel
 		 *            - The channel the command was sent to
@@ -148,11 +153,14 @@ public class Command {
 		 *            - Any arguments (make sure to handle invalid ones, because
 		 *            people are idiots)
 		 */
-		public void onCommand(String channel, String sender, String login, String hostname, String additional);
+		public void onCommand(Server server, String channel, String sender, String login, String hostname, String additional);
 
 		/**
 		 * What the command sends for help. Could be syntax, what it does, or
 		 * both.
+		 * 
+		 * @param server
+		 *            - The server the command was issued on
 		 * 
 		 * @param channel
 		 *            - The channel the command was sent to
@@ -163,6 +171,6 @@ public class Command {
 		 * @param hostname
 		 *            - The host name of the sender of the command
 		 */
-		public void onHelp(String channel, String sender, String login, String hostname);
+		public void onHelp(Server server, String channel, String sender, String login, String hostname);
 	}
 }

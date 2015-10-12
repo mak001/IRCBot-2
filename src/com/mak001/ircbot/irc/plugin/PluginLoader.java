@@ -16,8 +16,8 @@ import java.util.jar.JarFile;
 
 import com.mak001.ircbot.Boot;
 import com.mak001.ircbot.IRCBot;
+import com.mak001.ircbot.api.Manifest;
 import com.mak001.ircbot.api.Plugin;
-
 
 public class PluginLoader {
 
@@ -63,11 +63,10 @@ public class PluginLoader {
 	}
 
 	private boolean isPluginClass(Class<?> clazz) {
-		return clazz.getSuperclass() == Plugin.class;
+		return clazz.getSuperclass() == Plugin.class && clazz.getAnnotation(Manifest.class) != null;
 	}
 
-	private Plugin addPluginClass(Class<?> clazz, File file) throws InstantiationException, IllegalAccessException,
-			IllegalArgumentException, InvocationTargetException, IOException {
+	private Plugin addPluginClass(Class<?> clazz, File file) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, IOException {
 		if (isPluginClass(clazz)) {
 			Constructor<?>[] cs = clazz.getConstructors();
 			Object invoke = cs[0].newInstance(bot);
@@ -104,7 +103,9 @@ public class PluginLoader {
 				String className = je.getName().replaceAll("/", "\\.");
 				className = className.substring(0, className.length() - 6);
 				Class<?> clazz = Class.forName(className, true, URLLoader);
-				if (isPluginClass(clazz)) return clazz;
+				if (isPluginClass(clazz)) {
+					return clazz;
+				}
 			}
 		}
 		return null;
