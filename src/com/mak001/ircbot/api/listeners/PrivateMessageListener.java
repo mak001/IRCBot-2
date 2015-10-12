@@ -1,5 +1,6 @@
 package com.mak001.ircbot.api.listeners;
 
+import com.mak001.ircbot.irc.Server;
 import com.mak001.ircbot.irc.plugin.Listener;
 
 /**
@@ -12,6 +13,7 @@ public interface PrivateMessageListener extends Listener {
 	/**
 	 * This method is called whenever a private message is sent to the PircBot.
 	 * Do NOT use for command listening.
+	 * @param server 
 	 * 
 	 * @param sender
 	 *            The nick of the person who sent the private message.
@@ -22,6 +24,6 @@ public interface PrivateMessageListener extends Listener {
 	 * @param message
 	 *            The actual message.
 	 */
-	public void onPrivateMessage(String sender, String login, String hostname, String message);
+	public void onPrivateMessage(Server server, String sender, String login, String hostname, String message);
 
 }

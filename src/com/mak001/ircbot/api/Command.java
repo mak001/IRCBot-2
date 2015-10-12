@@ -1,6 +1,5 @@
 package com.mak001.ircbot.api;
 
-
 public class Command {
 
 	private String[] command;
@@ -124,7 +123,7 @@ public class Command {
 	 *            - The host name of the sender of the command
 	 */
 	public void onHelp(String channel, String sender, String login, String hostname) {
-			commandAction.onHelp(channel, sender, login, hostname);
+		commandAction.onHelp(channel, sender, login, hostname);
 	}
 
 	/**

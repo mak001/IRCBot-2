@@ -1,5 +1,6 @@
 package com.mak001.ircbot.api.listeners;
 
+import com.mak001.ircbot.irc.Server;
 import com.mak001.ircbot.irc.plugin.Listener;
 
 /**
@@ -22,6 +23,6 @@ public interface PartListener extends Listener {
 	 * @param hostname
 	 *            The hostname of the user who parted from the channel.
 	 */
-	public void onPart(String channel, String sender, String login, String hostname);
+	public void onPart(Server server, String channel, String sender, String login, String hostname);
 
 }

@@ -1,5 +1,6 @@
 package com.mak001.ircbot.api.listeners;
 
+import com.mak001.ircbot.irc.Server;
 import com.mak001.ircbot.irc.plugin.Listener;
 
 /**
@@ -22,6 +23,6 @@ public interface NickChangeListener extends Listener {
 	 * @param newNick
 	 *            The new nick.
 	 */
-	public void onNickChange(String oldNick, String login, String hostname, String newNick);
+	public void onNickChange(Server server, String oldNick, String login, String hostname, String newNick);
 
 }

@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.InterruptedIOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.StringTokenizer;
 
 import com.mak001.ircbot.Boot;
 import com.mak001.ircbot.IRCBot;
@@ -32,24 +31,19 @@ public class InputThread extends Thread {
 					String line = null;
 					while ((line = reader.readLine()) != null) {
 						try {
-							Boot.getLogger()
-									.log(Logger.LogType.IRC, ">" + line);
-							bot.handleLine(line);
+							Boot.getLogger().log(Logger.LogType.IRC, ">" + line);
+							bot.handleLine(server, line);
 						} catch (Throwable t) {
-							// Stick the whole stack trace into a String so we
-							// can output it nicely.
 							StringWriter sw = new StringWriter();
 							PrintWriter pw = new PrintWriter(sw);
 							t.printStackTrace(pw);
 							pw.flush();
-							StringTokenizer tokenizer = new StringTokenizer(
-									sw.toString(), "\r\n");
 
-							Boot.getLogger().log(LogType.BOT,
-									"### An error occured. Please fix this.");
-							while (tokenizer.hasMoreTokens()) {
-								Boot.getLogger().log(LogType.BOT,
-										"### " + tokenizer.nextToken());
+							String[] error = sw.toString().split("\r\n");
+
+							Boot.getLogger().log(LogType.ERROR, "### An error occured. Please fix this.");
+							for (String errorString : error) {
+								Boot.getLogger().log(LogType.ERROR, "### " + errorString);
 							}
 						}
 					}
@@ -57,8 +51,7 @@ public class InputThread extends Thread {
 						running = false;
 					}
 				} catch (InterruptedIOException iioe) {
-					server.getOutputThread().sendRawLine(
-							"PING " + (System.currentTimeMillis() / 1000));
+					server.getOutputThread().sendRawLine("PING " + (System.currentTimeMillis() / 1000));
 				}
 			}
 		} catch (Exception e) {

@@ -22,14 +22,10 @@ import com.mak001.ircbot.gui.SetUp;
  */
 public final class SettingsManager {
 
-	public static final String LINE_SEPERATOR = System
-			.getProperty("line.separator");
-	public static final String FILE_SEPERATOR = System
-			.getProperty("file.separator");
-	public static final String BOT_HOME = System.getProperty("user.home")
-			+ FILE_SEPERATOR + "IRCBot";
-	public static final String SETTINGS_FOLDER = BOT_HOME + FILE_SEPERATOR
-			+ "Settings" + FILE_SEPERATOR;
+	public static final String LINE_SEPERATOR = System.getProperty("line.separator");
+	public static final String FILE_SEPERATOR = System.getProperty("file.separator");
+	public static final String BOT_HOME = System.getProperty("user.home") + FILE_SEPERATOR + "IRCBot";
+	public static final String SETTINGS_FOLDER = BOT_HOME + FILE_SEPERATOR + "Settings" + FILE_SEPERATOR;
 
 	private static final String USER_NAME = "USER NAME";
 	private static final String USER_PASS = "USER PASS";
@@ -39,14 +35,15 @@ public final class SettingsManager {
 	private static final String CHANNEL_NAME = "NAME";
 	private static final String CHANNEL_PASS = "PASS";
 
-	private static final String SETTINGS_FILE_STRING = SETTINGS_FOLDER
-			+ "settings.json";
+	private static final String SETTINGS_FILE_STRING = SETTINGS_FOLDER + "settings.json";
 	private static final File SETTINGS_FILE = new File(SETTINGS_FILE_STRING);
 
 	private static String u_name;
 	private static String u_pass;
 	private static String prefix;
+	//TODO - make it save multiple networks
 	private static String network;
+	// name, pass
 	private static HashMap<String, String> channels = new HashMap<String, String>();
 
 	/**
@@ -66,9 +63,7 @@ public final class SettingsManager {
 			JSONArray chans = obj.getJSONArray(CHANNELS);
 			for (int i = 0; i < chans.length(); i++) {
 				JSONObject chan = chans.getJSONObject(i);
-				channels.put(chan.getString(CHANNEL_NAME), chan
-						.has(CHANNEL_PASS) ? chan.getString(CHANNEL_PASS)
-						: null);
+				channels.put(chan.getString(CHANNEL_NAME), chan.has(CHANNEL_PASS) ? chan.getString(CHANNEL_PASS) : null);
 			}
 		} else {
 			SETTINGS_FILE.createNewFile();
@@ -78,8 +73,7 @@ public final class SettingsManager {
 
 	private static String getFileText(File file) throws IOException {
 		StringBuilder response = new StringBuilder();
-		BufferedReader input = new BufferedReader(new InputStreamReader(
-				new FileInputStream(file)));
+		BufferedReader input = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
 		String strLine = null;
 		while ((strLine = input.readLine()) != null) {
 			response.append(strLine);

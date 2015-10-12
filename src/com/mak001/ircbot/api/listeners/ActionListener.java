@@ -1,5 +1,6 @@
 package com.mak001.ircbot.api.listeners;
 
+import com.mak001.ircbot.irc.Server;
 import com.mak001.ircbot.irc.plugin.Listener;
 
 /**
@@ -27,7 +28,7 @@ public interface ActionListener extends Listener {
 	 * @param action
 	 *            The action carried out by the user.
 	 */
-	public void onAction(String sender, String login, String hostname,
+	public void onAction(Server server, String sender, String login, String hostname,
 			String target, String action);
 
 }

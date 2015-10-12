@@ -1,5 +1,6 @@
 package com.mak001.ircbot.api.listeners;
 
+import com.mak001.ircbot.irc.Server;
 import com.mak001.ircbot.irc.plugin.Listener;
 
 /**
@@ -12,6 +13,8 @@ public interface ModeListener extends Listener {
 	/**
 	 * This method is called whenever a channel mode is changed.
 	 * 
+	 * @param server
+	 * 
 	 * @param channel
 	 *            - The channel the mode change occurs for
 	 * @param sourceNick
@@ -23,7 +26,7 @@ public interface ModeListener extends Listener {
 	 * @param mode
 	 *            - The mode that was changed
 	 */
-	void onChannelMode(String channel, String sourceNick, String sourceLogin, String sourceHostname, String mode);
+	void onChannelMode(Server server, String channel, String sourceNick, String sourceLogin, String sourceHostname, String mode);
 
 	/**
 	 * This method is called whenever a user mode is changed.
@@ -39,6 +42,6 @@ public interface ModeListener extends Listener {
 	 * @param mode
 	 *            - The mode that was changed
 	 */
-	void onUserMode(String channel, String sourceNick, String sourceLogin, String sourceHostname, String mode);
+	void onUserMode(Server server, String channel, String sourceNick, String sourceLogin, String sourceHostname, String mode);
 
 }

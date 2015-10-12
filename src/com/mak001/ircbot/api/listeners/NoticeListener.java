@@ -1,5 +1,6 @@
 package com.mak001.ircbot.api.listeners;
 
+import com.mak001.ircbot.irc.Server;
 import com.mak001.ircbot.irc.plugin.Listener;
 
 /**
@@ -23,6 +24,6 @@ public interface NoticeListener extends Listener {
 	 * @param notice
 	 *            The notice message.
 	 */
-	public void onNotice(String sourceNick, String sourceLogin, String sourceHostname, String target, String notice);
+	public void onNotice(Server server, String sourceNick, String sourceLogin, String sourceHostname, String target, String notice);
 
 }

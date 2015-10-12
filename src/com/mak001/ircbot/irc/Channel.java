@@ -1,7 +1,11 @@
 package com.mak001.ircbot.irc;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+
+import com.mak001.ircbot.Boot;
+import com.mak001.ircbot.irc.io.Logger.LogType;
 
 /**
  * A channel object. Used to store the channel name, prefix and a list of users
@@ -14,10 +18,21 @@ public class Channel {
 	private final char PREFIX;
 	private final String NAME;
 	private final List<Mode> MODES = new ArrayList<Mode>();
+	private final HashMap<String, User> users = new HashMap<String, User>();
 
-	public Channel(char prefix, String name) {
-		PREFIX = prefix;
+	private String topic;
+
+	public Channel(String name) {
+		PREFIX = name.charAt(0);
 		NAME = name;
+	}
+
+	public void setTopic(String topic) {
+		this.topic = topic;
+	}
+
+	public String getTopic() {
+		return topic;
 	}
 
 	/**
@@ -35,13 +50,6 @@ public class Channel {
 	}
 
 	/**
-	 * @return The prefix and the name of the channel
-	 */
-	public String getFullName() {
-		return PREFIX + NAME;
-	}
-
-	/**
 	 * Adds a mode to the user.
 	 * 
 	 * @param mode
@@ -56,10 +64,10 @@ public class Channel {
 	 * Adds modes to the user.
 	 * 
 	 * @param modeList
-	 *            - Modes to add.
+	 *            - Mode to add.
 	 * @return - If the modes were added.
 	 */
-	public boolean addModes(Mode[] modeList) {
+	public boolean addMode(Mode[] modeList) {
 		boolean b = true;
 		for (Mode mode : modeList) {
 			if (!MODES.add(mode))
@@ -72,10 +80,10 @@ public class Channel {
 	 * Adds modes to the user.
 	 * 
 	 * @param modeList
-	 *            - Modes to add.
+	 *            - Mode to add.
 	 * @return - If the modes were added.
 	 */
-	public boolean addModes(List<Mode> modeList) {
+	public boolean addMode(List<Mode> modeList) {
 		return MODES.addAll(modeList);
 	}
 
@@ -94,10 +102,10 @@ public class Channel {
 	 * Remove modes from the user.
 	 * 
 	 * @param modeList
-	 *            - Modes to remove.
+	 *            - Mode to remove.
 	 * @return - If the modes were removed.
 	 */
-	public boolean removeModes(Mode[] modeList) {
+	public boolean removeMode(Mode[] modeList) {
 		boolean b = true;
 		for (Mode mode : modeList) {
 			if (!MODES.remove(mode))
@@ -110,11 +118,50 @@ public class Channel {
 	 * Remove modes from the user.
 	 * 
 	 * @param modeList
-	 *            - Modes to remove.
+	 *            - Mode to remove.
 	 * @return - If the modes were removed.
 	 */
-	public boolean removeModes(List<Mode> modeList) {
+	public boolean removeMode(List<Mode> modeList) {
 		return MODES.removeAll(modeList);
+	}
+
+	public void addMode(String mode) {
+		System.out.println(mode);
+		char[] ms = mode.toCharArray();
+		for (char m : ms) {
+			if (!Character.isWhitespace(m) && m != '+' && m != ' ' && !hasMode(m)) {
+				MODES.add(getMode(m));
+				System.out.println("Adding mode " + m + " to channel " + NAME);
+			}
+		}
+	}
+
+	public void removeMode(String mode) {
+		System.out.println(mode);
+		char[] ms = mode.toCharArray();
+		for (char m : ms) {
+			if (m != '-') {
+				if (MODES.contains(getMode(m))) {
+					MODES.remove(getMode(m));
+				}
+			}
+		}
+	}
+
+	public Mode getMode(char c) {
+		for (Mode m : Mode.values()) {
+			if (c == m.getCharSymbol())
+				return m;
+		}
+		return null;
+	}
+
+	public boolean hasMode(char mode) {
+		return MODES.contains(getMode(mode));
+	}
+
+	public boolean hasMode(Mode mode) {
+		return MODES.contains(mode);
 	}
 
 	/**
@@ -124,10 +171,21 @@ public class Channel {
 	 * @author MAK001
 	 */
 	public enum Mode {
-		NO_CONTROL_CODES('c'), NO_EXTERNAL_MESSAGES('n'), OPS_TOPIC('t'), SECRET(
-				's'), PARANOIA('p'), MODERATED('m'), INVITE_ONLY('i'), BANDWIDTH_SAVER(
-				'B'), NO_CTCPS('C'), MODREG('M'), NO_NOTICES('N'), REGISTERED_ONLY(
-				'R'), SSL_ONLY('S'), PERSIST_ONLY('z'), OPER_ONLY('O');
+		NO_CONTROL_CODES('c'),
+		NO_EXTERNAL_MESSAGES('n'),
+		OPS_TOPIC('t'),
+		SECRET('s'),
+		PARANOIA('p'),
+		MODERATED('m'),
+		INVITE_ONLY('i'),
+		BANDWIDTH_SAVER('B'),
+		NO_CTCPS('C'),
+		MODREG('M'),
+		NO_NOTICES('N'),
+		REGISTERED_ONLY('R'),
+		SSL_ONLY('S'),
+		PERSIST_ONLY('z'),
+		OPER_ONLY('O');
 
 		private int charCode;
 		private char symbolCode;
@@ -150,5 +208,34 @@ public class Channel {
 		public char getCharSymbol() {
 			return symbolCode;
 		}
+	}
+
+	public void addUser(User user) {
+		synchronized (users) {
+			users.put(user.getName(), user);
+		}
+	}
+
+	public void removeUser(String name) {
+		synchronized (users) {
+			users.remove(name);
+		}
+	}
+
+	public void changeUserName(String oldNick, String newNick) {
+		synchronized (users) {
+			if (users.containsKey(oldNick)) {
+				User u = users.get(oldNick);
+				u.updateName(newNick);
+				users.remove(oldNick);
+				users.put(newNick, u);
+			} else {
+				Boot.getLogger().log(LogType.BOT, "###### Failed to find user " + oldNick + " to change name to " + newNick);
+			}
+		}
+	}
+
+	public HashMap<String, User> getUsers() {
+		return users;
 	}
 }

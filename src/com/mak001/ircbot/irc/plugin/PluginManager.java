@@ -21,6 +21,7 @@ import com.mak001.ircbot.api.listeners.NoticeListener;
 import com.mak001.ircbot.api.listeners.PartListener;
 import com.mak001.ircbot.api.listeners.PrivateMessageListener;
 import com.mak001.ircbot.api.listeners.QuitListener;
+import com.mak001.ircbot.irc.Server;
 
 public class PluginManager {
 
@@ -71,8 +72,7 @@ public class PluginManager {
 	 * @throws UnknownDependencyException
 	 *             If a required dependency could not be found
 	 */
-	public synchronized Plugin loadPlugin(File file)
-			throws InvalidPluginException {
+	public synchronized Plugin loadPlugin(File file) throws InvalidPluginException {
 		if (file == null)
 			return null;
 		Plugin result = pluginLoader.loadPlugin(file);
@@ -191,43 +191,34 @@ public class PluginManager {
 		return commandManager.getAllCommands();
 	}
 
-	public boolean onCommand(String channel, String sender, String login,
-			String hostname, String message) {
+	public boolean onCommand(Server server, String channel, String sender, String login, String hostname, String message) {
 		boolean wasHelp = false;
 		if (message.toUpperCase().startsWith("HELP")) {
-			String add = message.replaceFirst("(?i)HELP", "").replaceFirst(" ",
-					"");
-			wasHelp = !onHelp(channel, sender, login, hostname, add);
+			String add = message.replaceFirst("(?i)HELP", "").replaceFirst(" ", "");
+			wasHelp = !onHelp(server, channel, sender, login, hostname, add);
 		}// TODO - move the about and versions?
 		Command command = commandManager.getCommand(message);
 		if (command == null)
 			return false;
-		if (bot.getPermissionHandler().getUser(sender)
-				.hasPermission(command.getPermission())) {
+		if (bot.getPermissionHandler().getUser(sender).hasPermission(command.getPermission())) {
 			if (wasHelp) {
 				command.onHelp(channel, sender, login, hostname);
 				return true;
 			} else {
-				command.onCommand(channel, sender, login, hostname,
-						commandManager.getAdditional(command, message));
+				command.onCommand(channel, sender, login, hostname, commandManager.getAdditional(command, message));
 				return true;
 			}
 		}
 		return false;
 	}
 
-	private boolean onHelp(String channel, String sender, String login,
-			String hostname, String message) {
+	private boolean onHelp(Server server, String channel, String sender, String login, String hostname, String message) {
 		if (message.equals("") || message.replace(" ", "").equals("")) {
-			bot.sendMessage(
-					sender,
-					"This will list every plugin command, use "
-							+ SettingsManager.getCommandPrefix()
-							+ "HELP <PLUGIN COMMAND>   for more help with an individual plugin.");
+			server.sendMessage(sender, "This will list every plugin command, use " + SettingsManager.getCommandPrefix() + "HELP <PLUGIN COMMAND>   for more help with an individual plugin.");
 			for (Plugin p : getPlugins()) {
 				String name = p.getManifest().name();
 				System.out.println(name);
-				bot.sendMessage(sender, name + " - " + p.GENERAL_COMMAND);
+				server.sendMessage(sender, name + " - " + p.GENERAL_COMMAND);
 			}
 			return true;
 		} else {
@@ -240,11 +231,9 @@ public class PluginManager {
 			}
 			Plugin plugin = commandManager.getPluginByCommand(com);
 			if (plugin != null) {
-				bot.sendMessage(sender, "This will list every commands from "
-						+ plugin.getName());
+				server.sendMessage(sender, "This will list every commands from " + plugin.getName());
 				for (Command c : commandManager.getCommands(plugin.getName())) {
-					if (bot.getPermissionHandler().getUser(sender)
-							.hasPermission(c.getPermission())) {
+					if (bot.getPermissionHandler().getUser(sender).hasPermission(c.getPermission())) {
 						c.onHelp(channel, sender, login, hostname);
 					}
 				}
@@ -255,98 +244,81 @@ public class PluginManager {
 		}
 	}
 
-	public void triggerActionListeners(String sender, String login,
-			String hostname, String target, String action) {
+	public void triggerActionListeners(Server server, String sender, String login, String hostname, String target, String action) {
 		for (ActionListener listener : actionListeners) {
-			listener.onAction(sender, login, hostname, target, action);
+			listener.onAction(server, sender, login, hostname, target, action);
 		}
 	}
 
-	public void triggerJoinListeners(String channel, String sender,
-			String login, String hostname) {
+	public void triggerJoinListeners(Server server, String channel, String sender, String login, String hostname) {
 		for (JoinListener listener : joinListeners) {
-			listener.onJoin(channel, sender, login, hostname);
+			listener.onJoin(server, channel, sender, login, hostname);
 		}
 	}
 
-	public void triggerMessageListeners(String channel, String sender,
-			String login, String hostname, String message) {
+	public void triggerMessageListeners(Server server, String channel, String sender, String login, String hostname, String message) {
 		for (MessageListener listener : messageListeners) {
-			listener.onMessage(channel, sender, login, hostname, message);
+			listener.onMessage(server, channel, sender, login, hostname, message);
 		}
 	}
 
-	public void triggerNickChangeListeners(String oldNick, String login,
-			String hostname, String newNick) {
+	public void triggerNickChangeListeners(Server server, String oldNick, String login, String hostname, String newNick) {
 		for (NickChangeListener listener : nickChangeListeners) {
-			listener.onNickChange(oldNick, login, hostname, newNick);
+			listener.onNickChange(server, oldNick, login, hostname, newNick);
 		}
 	}
 
-	public void triggerNoticeListeners(String sourceNick, String sourceLogin,
-			String sourceHostname, String target, String notice) {
+	public void triggerNoticeListeners(Server server, String sourceNick, String sourceLogin, String sourceHostname, String target, String notice) {
 		for (NoticeListener listener : noticeListeners) {
-			listener.onNotice(sourceNick, sourceLogin, sourceHostname, target,
-					notice);
+			listener.onNotice(server, sourceNick, sourceLogin, sourceHostname, target, notice);
 		}
 	}
 
-	public void triggerPartListeners(String channel, String sender,
-			String login, String hostname) {
+	public void triggerPartListeners(Server server, String channel, String sender, String login, String hostname) {
 		for (PartListener listener : partListeners) {
-			listener.onPart(channel, sender, login, hostname);
+			listener.onPart(server, channel, sender, login, hostname);
 		}
 	}
 
-	public void triggerPrivateMessageListeners(String sender, String login,
-			String hostname, String message) {
+	public void triggerPrivateMessageListeners(Server server, String sender, String login, String hostname, String message) {
 		for (PrivateMessageListener listener : privateMessageListeners) {
-			listener.onPrivateMessage(sender, login, hostname, message);
+			listener.onPrivateMessage(server, sender, login, hostname, message);
 		}
 	}
 
-	public void triggerQuitListeners(String sourceNick, String sourceLogin,
-			String sourceHostname, String reason) {
+	public void triggerQuitListeners(Server server, String sourceNick, String sourceLogin, String sourceHostname, String reason) {
 		for (QuitListener listener : quitListeners) {
-			listener.onQuit(sourceNick, sourceLogin, sourceHostname, reason);
+			listener.onQuit(server, sourceNick, sourceLogin, sourceHostname, reason);
 		}
 	}
 
-	public void triggerFingerListeners(String sourceNick, String sourceLogin,
-			String sourceHostname, String target) {
+	public void triggerFingerListeners(Server server, String sourceNick, String sourceLogin, String sourceHostname, String target) {
 		for (CTCPListener listener : ctcpListeners) {
-			listener.onFinger(sourceNick, sourceLogin, sourceHostname, target);
+			listener.onFinger(server, sourceNick, sourceLogin, sourceHostname, target);
 		}
 	}
 
-	public void triggerPingListeners(String user, String sourceLogin,
-			String sourceHostname, String target, String pingValue) {
+	public void triggerPingListeners(Server server, String user, String sourceLogin, String sourceHostname, String target, String pingValue) {
 		for (CTCPListener listener : ctcpListeners) {
-			listener.onPing(user, sourceLogin, sourceHostname, target,
-					pingValue);
+			listener.onPing(server, user, sourceLogin, sourceHostname, target, pingValue);
 		}
 	}
 
-	public void triggerVersionListeners(String sourceNick, String sourceLogin,
-			String sourceHostname, String target) {
+	public void triggerVersionListeners(Server server, String sourceNick, String sourceLogin, String sourceHostname, String target) {
 		for (CTCPListener listener : ctcpListeners) {
-			listener.onVersion(sourceNick, sourceLogin, sourceHostname, target);
+			listener.onVersion(server, sourceNick, sourceLogin, sourceHostname, target);
 		}
 	}
 
-	public void triggerChannelModeListeners(String channel, String sourceNick,
-			String sourceLogin, String sourceHostname, String mode) {
+	public void triggerChannelModeListeners(Server server, String channel, String sourceNick, String sourceLogin, String sourceHostname, String mode) {
 		for (ModeListener listener : modeListeners) {
-			listener.onChannelMode(channel, sourceNick, sourceLogin,
-					sourceHostname, mode);
+			listener.onChannelMode(server, channel, sourceNick, sourceLogin, sourceHostname, mode);
 		}
 	}
 
-	public void triggerUserModeListeners(String channel, String sourceNick,
-			String sourceLogin, String sourceHostname, String mode) {
+	public void triggerUserModeListeners(Server server, String channel, String sourceNick, String sourceLogin, String sourceHostname, String mode) {
 		for (ModeListener listener : modeListeners) {
-			listener.onUserMode(channel, sourceNick, sourceLogin,
-					sourceHostname, mode);
+			listener.onUserMode(server, channel, sourceNick, sourceLogin, sourceHostname, mode);
 		}
 	}
 

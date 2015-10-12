@@ -39,10 +39,15 @@ public class Logger {
 		PLUGINS_ONLY(LogType.PLUGIN),
 		IRC_ONLY(LogType.IRC),
 		BOT_ONLY(LogType.BOT),
+		ERROR_ONLY(LogType.ERROR),
 		BOT_AND_IRC(LogType.BOT, LogType.IRC),
 		BOT_AND_PLUGINS(LogType.BOT, LogType.PLUGIN),
+		BOT_AND_ERRORS(LogType.BOT, LogType.ERROR),
+		BOT_AND_PLUGINS_AND_ERRORS(LogType.BOT, LogType.PLUGIN, LogType.ERROR),
 		PLUGINS_AND_IRC(LogType.PLUGIN, LogType.IRC),
-		ALL(LogType.BOT, LogType.PLUGIN, LogType.IRC);
+		PLUGINS_AND_ERRORS(LogType.PLUGIN, LogType.ERROR),
+		IRC_AND_ERRORS(LogType.IRC, LogType.ERROR),
+		ALL(LogType.BOT, LogType.PLUGIN, LogType.ERROR, LogType.IRC);
 
 		private final List<LogType> logTypes;
 
@@ -58,7 +63,8 @@ public class Logger {
 	public enum LogType {
 		PLUGIN,
 		BOT,
-		IRC
+		IRC,
+		ERROR,
 	}
 
 }
