@@ -38,9 +38,9 @@ public final class SettingsManager {
 	private static final String SETTINGS_FILE_STRING = SETTINGS_FOLDER + "settings.json";
 	private static final File SETTINGS_FILE = new File(SETTINGS_FILE_STRING);
 
-	private static String u_name;
+	private static String u_name = "jizz_V2";
 	private static String u_pass;
-	private static String prefix;
+	private static String prefix = "!";
 	//TODO - make it save multiple networks
 	private static String network;
 	// name, pass

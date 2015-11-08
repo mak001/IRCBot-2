@@ -8,15 +8,20 @@ public class Boot {
 	private static IRCBot bot;
 
 	public static void main(String[] argsList) {
-		bot = new IRCBot();
+		new IRCBot();
+		
 	}
 
 	public static Logger getLogger() {
 		return logger;
 	}
-	
-	public static IRCBot getBot(){
+
+	public static IRCBot getBot() {
 		return bot;
+	}
+
+	protected static void setBot(IRCBot ircbot) {
+		bot = ircbot;
 	}
 
 }

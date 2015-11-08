@@ -1,6 +1,5 @@
 package com.mak001.ircbot;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.StringTokenizer;
@@ -24,19 +23,18 @@ public class IRCBot {
 	private Server server;
 
 	public IRCBot() {
+		Boot.setBot(this);
 		permissionHandler = new PermissionHandler();
 		manager = new PluginManager(this);
+		manager.loadPluginFolder();
+
 		try {
 			// TODO - redo
 			Boot.getLogger().log(Logger.LogType.BOT, "Connecting to server");
 			server = new Server(this, "jizz_V2", "", "irc.rizon.net", 6667);
-		} catch (IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	}
-
-	public Server getServer() {
-		return server;
 	}
 
 	public PermissionHandler getPermissionHandler() {
@@ -71,7 +69,7 @@ public class IRCBot {
 		String senderInfo = tokenizer.nextToken();
 		String command = tokenizer.nextToken();
 		String target = null;
-		
+
 		int exclamation = senderInfo.indexOf("!");
 		int at = senderInfo.indexOf("@");
 		if (senderInfo.startsWith(":")) {
@@ -118,55 +116,67 @@ public class IRCBot {
 			target = target.substring(1);
 		}
 
-		// Check for CTCP requests.
-		if (command.equals("PRIVMSG") && line.indexOf(":\u0001") > 0 && line.endsWith("\u0001")) {
-			String request = line.substring(line.indexOf(":\u0001") + 2, line.length() - 1);
-			if (request.equals("VERSION")) {
-				// VERSION request
-				this.onVersion(server, sourceNick, sourceLogin, sourceHostname, target);
-			} else if (request.startsWith("ACTION ")) {
-				// ACTION request
-				this.onAction(server, sourceNick, sourceLogin, sourceHostname, target, request.substring(7));
-			} else if (request.startsWith("PING ")) {
-				// PING request
-				this.onPing(server, sourceNick, sourceLogin, sourceHostname, target, request.substring(5));
-			} else if (request.equals("TIME")) {
-				// TIME request
-				this.onTime(server, sourceNick, sourceLogin, sourceHostname, target);
-			} else if (request.equals("FINGER")) {
-				// FINGER request
-				this.onFinger(server, sourceNick, sourceLogin, sourceHostname, target);
-			} else if ((tokenizer = new StringTokenizer(request)).countTokens() >= 5 && tokenizer.nextToken().equals("DCC")) {
-				// This is a DCC request.
-			} else {
-				// An unknown CTCP message - ignore it.
+		switch (command) {
+		case "PRIVMSG":
+			if (line.indexOf(":\u0001") > 0 && line.endsWith("\u0001")) {
+				// CTCP requests
+				String fullRequest = line.substring(line.indexOf(":\u0001") + 2, line.length() - 1);
+				String request = fullRequest;
+				if (request.contains(" ")) {
+					request = request.split(" ")[0];
+				}
+				switch (request) {
+				case "VERSION":
+					this.onVersion(server, sourceNick, sourceLogin, sourceHostname, target);
+					break;
+				case "ACTION":
+					this.onAction(server, sourceNick, sourceLogin, sourceHostname, target, fullRequest.substring(7));
+					break;
+				case "PING":
+					this.onPing(server, sourceNick, sourceLogin, sourceHostname, target, fullRequest.substring(5));
+					break;
+				case "TIME":
+					this.onTime(server, sourceNick, sourceLogin, sourceHostname, target);
+					break;
+				case "FINGER":
+					this.onFinger(server, sourceNick, sourceLogin, sourceHostname, target);
+					break;
+				}
+
+			} else if (CHANNEL_PREFIXES.indexOf(target.charAt(0)) >= 0) {
+				// Private message to a channel
+				this.onMessage(server, target, sourceNick, sourceLogin, sourceHostname, line.substring(line.indexOf(" :") + 2));
+
+			} else { // Private message to the bot
+				this.onPrivateMessage(server, sourceNick, sourceLogin, sourceHostname, line.substring(line.indexOf(" :") + 2));
 			}
-		} else if (command.equals("PRIVMSG") && CHANNEL_PREFIXES.indexOf(target.charAt(0)) >= 0) {
-			// This is a normal message to a channel.
-			this.onMessage(server, target, sourceNick, sourceLogin, sourceHostname, line.substring(line.indexOf(" :") + 2));
-		} else if (command.equals("PRIVMSG")) {
-			// This is a private message to us.
-			this.onPrivateMessage(server, sourceNick, sourceLogin, sourceHostname, line.substring(line.indexOf(" :") + 2));
-		} else if (command.equals("JOIN")) {
-			// Someone is joining a channel.
+			break;
+
+		case "JOIN":
 			this.onJoin(server, target, sourceNick, sourceLogin, sourceHostname);
-		} else if (command.equals("PART")) {
-			// Someone is parting from a channel.
+			break;
+		case "PART":
 			this.onPart(server, target, sourceNick, sourceLogin, sourceHostname);
-		} else if (command.equals("NICK")) {
-			// Somebody is changing their nick.
+			break;
+
+		case "NICK":
 			this.onNickChange(server, sourceNick, sourceLogin, sourceHostname, target);
-		} else if (command.equals("NOTICE")) {
-			// Someone is sending a notice.
+			break;
+
+		case "NOTICE":
 			this.onNotice(server, sourceNick, sourceLogin, sourceHostname, target, line.substring(line.indexOf(" :") + 2));
-		} else if (command.equals("QUIT")) {
-			// Someone has quit from the IRC server.
+			break;
+
+		case "QUIT":
 			this.onQuit(server, sourceNick, sourceLogin, sourceHostname, line.substring(line.indexOf(" :") + 2));
-		} else if (command.equals("KICK")) {
-			// Somebody has been kicked from a channel.
+			break;
+
+		case "KICK": // TODO
 			String recipient = tokenizer.nextToken();
 			this.onKick(server, target, sourceNick, sourceLogin, sourceHostname, recipient, line.substring(line.indexOf(" :") + 2));
-		} else if (command.equals("MODE")) {
+			break;
+
+		case "MODE":
 			// Somebody is changing the mode on a channel or user.
 			String mode = line.substring(line.indexOf(target, 2) + target.length() + 1);
 			if (mode.startsWith(":")) {
@@ -177,14 +187,18 @@ public class IRCBot {
 			} else {
 				onUserMode(server, target, sourceNick, sourceLogin, sourceHostname, mode);
 			}
-		} else if (command.equals("TOPIC")) {
-			// Someone is changing the topic.
+			break;
+
+		case "TOPIC":
 			this.onTopic(server, target, line.substring(line.indexOf(" :") + 2), sourceNick, System.currentTimeMillis(), true);
-		} else if (command.equals("INVITE")) {
-			// Somebody is inviting somebody else into a channel.
+			break;
+
+		case "INVITE":
 			this.onInvite(server, target, sourceNick, sourceLogin, sourceHostname, line.substring(line.indexOf(" :") + 2));
-		} else {
-			// unknown
+			break;
+
+		default: // Unknown
+			break;
 		}
 	}
 
@@ -418,5 +432,10 @@ public class IRCBot {
 
 	private boolean isCommand(String message) {
 		return message.substring(0, 1).equals(SettingsManager.getCommandPrefix());
+	}
+
+	public void onConnect(Server server) {
+		// TODO Auto-generated method stub
+		server.joinChannel("#mak");
 	}
 }

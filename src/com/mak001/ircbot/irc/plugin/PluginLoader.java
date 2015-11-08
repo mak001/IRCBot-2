@@ -63,11 +63,22 @@ public class PluginLoader {
 		return clazz.getSuperclass() == Plugin.class && clazz.getAnnotation(Manifest.class) != null;
 	}
 
-	private Plugin addPluginClass(Class<?> clazz, File file) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, IOException {
+	private Plugin addPluginClass(Class<?> clazz, File file) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, IOException, InvalidPluginException {
 		if (isPluginClass(clazz)) {
-			Constructor<?>[] cs = clazz.getConstructors();
-			Object invoke = cs[0].newInstance();
-			Plugin plugin = (Plugin) (invoke);
+			Constructor<?>[] cs = clazz.getDeclaredConstructors();
+			Constructor<?> constructor = null;
+
+			for (int i = 0; i < cs.length; i++) {
+				if (cs[i].getParameterTypes().length == 0) {
+					constructor = cs[i];
+					constructor.setAccessible(true);
+				}
+			}
+			if (constructor == null) {
+				throw new InvalidPluginException();
+			}
+			Plugin plugin = (Plugin) constructor.newInstance();
+
 			if (plugin.getManifest() == null) {
 				System.out.println("Failed to load " + file.toString() + ".  No manifest.");
 			} else {

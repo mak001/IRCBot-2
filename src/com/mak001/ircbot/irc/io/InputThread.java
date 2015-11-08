@@ -16,10 +16,10 @@ public class InputThread extends Thread {
 	private BufferedReader reader;
 	private Server server;
 
-	public InputThread(IRCBot bot, BufferedReader reader) {
+	public InputThread(IRCBot bot, Server server, BufferedReader reader) {
 		this.bot = bot;
 		this.reader = reader;
-		this.server = bot.getServer();
+		this.server = server;
 	}
 
 	@Override

@@ -347,4 +347,18 @@ public class PluginManager {
 		// TODO Auto-generated method stub
 		return false;
 	}
+
+	public void loadPluginFolder() {
+		File folder = new File(SettingsManager.BOT_HOME + SettingsManager.FILE_SEPERATOR + "Plugins");
+		for (File file : folder.listFiles()) {
+			try {
+				String path = file.getCanonicalPath();
+				if (path != null && path.endsWith(".jar")) {
+					this.loadPlugin(file);
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
 }
