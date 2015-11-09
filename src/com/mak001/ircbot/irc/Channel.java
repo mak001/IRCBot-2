@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import com.mak001.ircbot.Boot;
+import com.mak001.ircbot.api.Command;
 import com.mak001.ircbot.irc.io.Logger.LogType;
 
 /**
@@ -17,14 +18,23 @@ public class Channel {
 
 	private final char PREFIX;
 	private final String NAME;
+	private final String PASS;
 	private final List<Mode> MODES = new ArrayList<Mode>();
 	private final HashMap<String, User> users = new HashMap<String, User>();
+
+	private final ArrayList<String> disabledCommands = new ArrayList<String>();
 
 	private String topic;
 
 	public Channel(String name) {
+		this(name, "");
+	}
+
+	public Channel(String name, String key) {
 		PREFIX = name.charAt(0);
 		NAME = name;
+		PASS = key;
+		// TODO Auto-generated constructor stub
 	}
 
 	public void setTopic(String topic) {
@@ -237,5 +247,25 @@ public class Channel {
 
 	public HashMap<String, User> getUsers() {
 		return users;
+	}
+
+	public ArrayList<String> getDisabledCommands() {
+		return disabledCommands;
+	}
+
+	public boolean disableCommand(String command) {
+		return disabledCommands.add(command);
+	}
+
+	public boolean isDisabled(Command command) {
+		for (String s : command.getCommand()) {
+			if (disabledCommands.contains(s))
+				return true;
+		}
+		return false;
+	}
+
+	public String getPass() {
+		return PASS;
 	}
 }

@@ -2,39 +2,31 @@ package com.mak001.ircbot;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.StringTokenizer;
 
 import com.mak001.ircbot.irc.Channel;
 import com.mak001.ircbot.irc.ReplyConstants;
 import com.mak001.ircbot.irc.Server;
 import com.mak001.ircbot.irc.User;
-import com.mak001.ircbot.irc.io.Logger;
 import com.mak001.ircbot.irc.plugin.PermissionHandler;
 import com.mak001.ircbot.irc.plugin.PluginManager;
 
 public class IRCBot {
 
 	public final static String ident = "Mak001s.bot.v2";
-	private static final String CHANNEL_PREFIXES = "#&+!";
+	public static final String CHANNEL_PREFIXES = "#&+!";
 
 	private final PermissionHandler permissionHandler;
 	private final PluginManager manager;
 
-	private Server server;
+	private final HashMap<String, Server> servers = new HashMap<String, Server>();
 
 	public IRCBot() {
 		Boot.setBot(this);
 		permissionHandler = new PermissionHandler();
 		manager = new PluginManager(this);
 		manager.loadPluginFolder();
-
-		try {
-			// TODO - redo
-			Boot.getLogger().log(Logger.LogType.BOT, "Connecting to server");
-			server = new Server(this, "jizz_V2", "", "irc.rizon.net", 6667);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 	}
 
 	public PermissionHandler getPermissionHandler() {
@@ -127,48 +119,83 @@ public class IRCBot {
 				}
 				switch (request) {
 				case "VERSION":
-					this.onVersion(server, sourceNick, sourceLogin, sourceHostname, target);
+					manager.triggerVersionListeners(server, sourceNick, sourceLogin, sourceHostname, target);
 					break;
 				case "ACTION":
-					this.onAction(server, sourceNick, sourceLogin, sourceHostname, target, fullRequest.substring(7));
+					manager.triggerActionListeners(server, sourceNick, sourceLogin, sourceHostname, target, fullRequest.substring(7));
 					break;
 				case "PING":
-					this.onPing(server, sourceNick, sourceLogin, sourceHostname, target, fullRequest.substring(5));
+					manager.triggerPingListeners(server, sourceNick, sourceLogin, sourceHostname, target, fullRequest.substring(5));
 					break;
 				case "TIME":
 					this.onTime(server, sourceNick, sourceLogin, sourceHostname, target);
 					break;
 				case "FINGER":
-					this.onFinger(server, sourceNick, sourceLogin, sourceHostname, target);
+					manager.triggerFingerListeners(server, sourceNick, sourceLogin, sourceHostname, target);
 					break;
 				}
 
 			} else if (CHANNEL_PREFIXES.indexOf(target.charAt(0)) >= 0) {
-				// Private message to a channel
-				this.onMessage(server, target, sourceNick, sourceLogin, sourceHostname, line.substring(line.indexOf(" :") + 2));
+				// Message to a channel
+				String message = line.substring(line.indexOf(" :") + 2);
+				if (isCommand(message)) {
+					String s = message.replaceFirst(SettingsManager.getCommandPrefix(), "");
+					manager.onCommand(server, target, sourceNick, sourceLogin, sourceHostname, s);
+				} else {
+					manager.triggerMessageListeners(server, target, sourceNick, sourceLogin, sourceHostname, message);
+				}
 
 			} else { // Private message to the bot
-				this.onPrivateMessage(server, sourceNick, sourceLogin, sourceHostname, line.substring(line.indexOf(" :") + 2));
+				String message = line.substring(line.indexOf(" :") + 2);
+				if (isCommand(message)) {
+					String s = message.replaceFirst(SettingsManager.getCommandPrefix(), "");
+					manager.onCommand(server, sourceNick, sourceNick, sourceLogin, sourceHostname, s);
+				} else {
+					manager.triggerPrivateMessageListeners(server, sourceNick, sourceLogin, sourceHostname, message);
+				}
 			}
 			break;
 
 		case "JOIN":
-			this.onJoin(server, target, sourceNick, sourceLogin, sourceHostname);
+			server.getChannelByName(target).addUser(new User(sourceNick));
+			manager.triggerJoinListeners(server, target, sourceNick, sourceLogin, sourceHostname);
 			break;
+
 		case "PART":
-			this.onPart(server, target, sourceNick, sourceLogin, sourceHostname);
+			server.getChannelByName(target).removeUser(sourceNick);
+			if (sourceNick.equals(server.getNick())) {
+				server.removeChannel(target);
+			}
+			manager.triggerPartListeners(server, target, sourceNick, sourceLogin, sourceHostname);
 			break;
 
 		case "NICK":
-			this.onNickChange(server, sourceNick, sourceLogin, sourceHostname, target);
+			for (Channel c : server.getChannels().values()) {
+				if (c.getUsers().containsKey(sourceNick)) {
+					c.changeUserName(sourceNick, target);
+				}
+			}
+			if (sourceNick.equals(server.getNick())) {
+				server.setNick(target);
+			}
+			manager.triggerNickChangeListeners(server, sourceNick, sourceLogin, sourceHostname, target);
 			break;
 
 		case "NOTICE":
-			this.onNotice(server, sourceNick, sourceLogin, sourceHostname, target, line.substring(line.indexOf(" :") + 2));
+			manager.triggerNoticeListeners(server, sourceNick, sourceLogin, sourceHostname, target, line.substring(line.indexOf(" :") + 2));
 			break;
 
 		case "QUIT":
-			this.onQuit(server, sourceNick, sourceLogin, sourceHostname, line.substring(line.indexOf(" :") + 2));
+			if (sourceNick.equals(server.getNick())) {
+				server.removeAllChannels();
+			} else {
+				for (Channel c : server.getChannels().values()) {
+					if (c.getUsers().containsKey(sourceNick)) {
+						c.removeUser(sourceNick);
+					}
+				}
+			}
+			manager.triggerQuitListeners(server, sourceNick, sourceLogin, sourceHostname, line.substring(line.indexOf(" :") + 2));
 			break;
 
 		case "KICK": // TODO
@@ -185,7 +212,7 @@ public class IRCBot {
 			if (CHANNEL_PREFIXES.indexOf(target.charAt(0)) >= 0) {
 				onMode(server, target, sourceNick, sourceLogin, sourceHostname, mode);
 			} else {
-				onUserMode(server, target, sourceNick, sourceLogin, sourceHostname, mode);
+				manager.triggerUserModeListeners(server, target, sourceNick, sourceLogin, sourceHostname, mode);
 			}
 			break;
 
@@ -194,7 +221,9 @@ public class IRCBot {
 			break;
 
 		case "INVITE":
-			this.onInvite(server, target, sourceNick, sourceLogin, sourceHostname, line.substring(line.indexOf(" :") + 2));
+			// TODO
+			// this.onInvite(server, target, sourceNick, sourceLogin,
+			// sourceHostname, line.substring(line.indexOf(" :") + 2));
 			break;
 
 		default: // Unknown
@@ -297,65 +326,9 @@ public class IRCBot {
 
 	}
 
-	private void onInvite(Server server, String target, String sourceNick, String sourceLogin, String sourceHostname, String substring) {
-		// TODO Auto-generated method stub
-
-	}
-
 	private void onTopic(Server server, String target, String substring, String sourceNick, long currentTimeMillis, boolean b) {
 		// TODO Auto-generated method stub
 
-	}
-
-	private void onMessage(Server server, String channel, String sender, String login, String hostname, String message) {
-		if (isCommand(message)) {
-			String s = message.replaceFirst(SettingsManager.getCommandPrefix(), "");
-			manager.onCommand(server, channel, sender, login, hostname, s);
-		} else {
-			manager.triggerMessageListeners(server, channel, sender, login, hostname, message);
-		}
-	}
-
-	private void onPrivateMessage(Server server, String sender, String login, String hostname, String message) {
-		if (isCommand(message)) {
-			String s = message.replaceFirst(SettingsManager.getCommandPrefix(), "");
-			manager.onCommand(server, sender, sender, login, hostname, s);
-		} else {
-			manager.triggerPrivateMessageListeners(server, sender, login, hostname, message);
-		}
-	}
-
-	private void onAction(Server server, String sender, String login, String hostname, String target, String action) {
-		manager.triggerActionListeners(server, sender, login, hostname, target, action);
-	}
-
-	private void onNotice(Server server, String sourceNick, String sourceLogin, String sourceHostname, String target, String notice) {
-		manager.triggerNoticeListeners(server, sourceNick, sourceLogin, sourceHostname, target, notice);
-	}
-
-	private void onJoin(Server server, String channel, String sender, String login, String hostname) {
-		server.getChannelByName(channel).addUser(new User(sender));
-		manager.triggerJoinListeners(server, channel, sender, login, hostname);
-	}
-
-	private void onPart(Server server, String channel, String sender, String login, String hostname) {
-		server.getChannelByName(channel).removeUser(sender);
-		if (sender.equals(server.getNick())) {
-			server.removeChannel(channel);
-		}
-		manager.triggerPartListeners(server, channel, sender, login, hostname);
-	}
-
-	private void onNickChange(Server server, String oldNick, String login, String hostname, String newNick) {
-		for (Channel c : server.getChannels().values()) {
-			if (c.getUsers().containsKey(oldNick)) {
-				c.changeUserName(oldNick, newNick);
-			}
-		}
-		if (oldNick.equals(server.getNick())) {
-			server.setNick(newNick);
-		}
-		manager.triggerNickChangeListeners(server, oldNick, login, hostname, newNick);
 	}
 
 	private void onKick(Server server, String channel, String kickerNick, String kickerLogin, String kickerHostname, String recipientNick, String reason) {
@@ -391,31 +364,6 @@ public class IRCBot {
 		manager.triggerChannelModeListeners(server, channel, sourceNick, sourceLogin, sourceHostname, mode);
 	}
 
-	private void onUserMode(Server server, String channel, String sourceNick, String sourceLogin, String sourceHostname, String mode) {
-		manager.triggerUserModeListeners(server, channel, sourceNick, sourceLogin, sourceHostname, mode);
-	}
-
-	private void onQuit(Server server, String sourceNick, String sourceLogin, String sourceHostname, String reason) {
-		if (sourceNick.equals(server.getNick())) {
-			server.removeAllChannels();
-		} else {
-			for (Channel c : server.getChannels().values()) {
-				if (c.getUsers().containsKey(sourceNick)) {
-					c.removeUser(sourceNick);
-				}
-			}
-		}
-		manager.triggerQuitListeners(server, sourceNick, sourceLogin, sourceHostname, reason);
-	}
-
-	private void onVersion(Server server, String sourceNick, String sourceLogin, String sourceHostname, String target) {
-		manager.triggerVersionListeners(server, sourceNick, sourceLogin, sourceHostname, target);
-	}
-
-	private void onPing(Server server, String sourceNick, String sourceLogin, String sourceHostname, String target, String pingValue) {
-		manager.triggerPingListeners(server, sourceNick, sourceLogin, sourceHostname, target, pingValue);
-	}
-
 	private void onServerPing(Server server, String response) {
 		// TODO - ???
 		server.sendRawLine("PONG " + response);
@@ -426,16 +374,24 @@ public class IRCBot {
 		server.getOutputThread().sendRawLine("NOTICE " + sourceNick + " :\u0001TIME " + new Date().toString() + "\u0001");
 	}
 
-	private void onFinger(Server server, String sourceNick, String sourceLogin, String sourceHostname, String target) {
-		manager.triggerFingerListeners(server, sourceNick, sourceLogin, sourceHostname, target);
-	}
-
 	private boolean isCommand(String message) {
 		return message.substring(0, 1).equals(SettingsManager.getCommandPrefix());
 	}
 
 	public void onConnect(Server server) {
 		// TODO Auto-generated method stub
-		server.joinChannel("#mak");
+		// server.joinChannel("#mak");
+	}
+
+	public HashMap<String, Server> getServers() {
+		return servers;
+	}
+
+	public Server getServer(String name) {
+		return servers.get(name);
+	}
+
+	public Server addServer(Server server) {
+		return servers.put(server.getServerName(), server);
 	}
 }

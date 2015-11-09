@@ -6,13 +6,13 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.HashMap;
-import java.util.Map.Entry;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.mak001.ircbot.gui.SetUp;
+import com.mak001.ircbot.irc.Channel;
+import com.mak001.ircbot.irc.Server;
 
 /**
  * The settings manager.
@@ -27,43 +27,67 @@ public final class SettingsManager {
 	public static final String BOT_HOME = System.getProperty("user.home") + FILE_SEPERATOR + "IRCBot";
 	public static final String SETTINGS_FOLDER = BOT_HOME + FILE_SEPERATOR + "Settings" + FILE_SEPERATOR;
 
-	private static final String USER_NAME = "USER NAME";
-	private static final String USER_PASS = "USER PASS";
-	private static final String COMMAND_PREFIX = "COMMAND PREFIX";
-	private static final String NETWORK = "NETWORK";
+	// Only thing that should persist over multiple servers
+	private static final String COMMAND_PREFIX = "COMMAND_PREFIX";
+
+	// network details, including nick and pass
+	private static final String NETWORKS = "NETWORKS";
+	private static final String NETWORK_NAME = "NETWORK_NAME";
+	private static final String NETWORK_PASS = "NETWORK_PASS";
+	private static final String USER_NAME = "USER_NAME";
+	private static final String USER_PASS = "USER_PASS";
+
+	// channel details, including disabled commands
 	private static final String CHANNELS = "CHANNELS";
-	private static final String CHANNEL_NAME = "NAME";
-	private static final String CHANNEL_PASS = "PASS";
+	private static final String CHANNEL_NAME = "CHANNEL_NAME";
+	private static final String CHANNEL_PASS = "CHANNEL_PASS";
+	private static final String DISABLED_COMMANDS = "DISABLED_COMMANDS";
 
 	private static final String SETTINGS_FILE_STRING = SETTINGS_FOLDER + "settings.json";
 	private static final File SETTINGS_FILE = new File(SETTINGS_FILE_STRING);
 
-	private static String u_name = "jizz_V2";
-	private static String u_pass;
+	// default prefix is stored
 	private static String prefix = "!";
-	//TODO - make it save multiple networks
-	private static String network;
-	// name, pass
-	private static HashMap<String, String> channels = new HashMap<String, String>();
+
+	// -list of networks/servers
+	// - network name
+	// - network pass
+	// - user name
+	// - user pass
+	// - list of channels
+	// -- channel name
+	// -- channel pass
+	// -- disabled commands
 
 	/**
 	 * Loads the settings
 	 * 
-	 * @throws IOException
+	 * @throws Exception
 	 */
-	public static void load() throws IOException {
+	public static void load() throws Exception {
+		// TODO
 		if (SETTINGS_FILE.exists()) {
 			JSONObject obj = new JSONObject(getFileText(SETTINGS_FILE));
-			u_name = obj.getString(USER_NAME);
-			u_pass = obj.getString(USER_PASS);
 			prefix = obj.getString(COMMAND_PREFIX);
 
-			network = obj.getString(NETWORK);
+			JSONArray networks = obj.getJSONArray(NETWORKS);
+			for (int i = 0; i < networks.length(); i++) {
+				JSONObject network = networks.getJSONObject(i);
 
-			JSONArray chans = obj.getJSONArray(CHANNELS);
-			for (int i = 0; i < chans.length(); i++) {
-				JSONObject chan = chans.getJSONObject(i);
-				channels.put(chan.getString(CHANNEL_NAME), chan.has(CHANNEL_PASS) ? chan.getString(CHANNEL_PASS) : null);
+				String serverName = network.getString(NETWORK_NAME);
+				String serverPass = network.getString(NETWORK_PASS);
+				String userName = network.getString(USER_NAME);
+				String userPass = network.getString(USER_PASS);
+
+				Boot.getBot().addServer(new Server(Boot.getBot(), userName, userPass, serverName, 6667, serverPass));
+
+				JSONArray channels = network.getJSONArray(CHANNELS);
+				for (int j = 0; j < channels.length(); j++) {
+					JSONObject channel = channels.getJSONObject(i);
+					String channelName = channel.getString(CHANNEL_NAME);
+					String channelPass = channel.getString(CHANNEL_PASS);
+					Boot.getBot().getServer(serverName).addChannel(channelName, channelPass);
+				}
 			}
 		} else {
 			SETTINGS_FILE.createNewFile();
@@ -94,6 +118,11 @@ public final class SettingsManager {
 
 			@Override
 			public void run() {
+				String u_name;
+				String u_pass;
+				String network;
+				String channel;
+
 				SetUp setUp = new SetUp();
 				setUp.setVisible(true);
 				while (setUp.isVisible()) {
@@ -104,11 +133,18 @@ public final class SettingsManager {
 					}
 				}
 				network = setUp.getJTextFields()[0].getText();
-				channels.put(setUp.getJTextFields()[1].getText(), "");
+				channel = setUp.getJTextFields()[1].getText();
 				u_name = setUp.getJTextFields()[2].getText();
 				u_pass = setUp.getJTextFields()[3].getText();
 				prefix = setUp.getJTextFields()[4].getText();
 				setUp.dispose();
+
+				try {
+					Boot.getBot().addServer(new Server(Boot.getBot(), u_name, u_pass, network, 6667));
+					Boot.getBot().getServer(network).addChannel(channel);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 		}).run();
 		save();
@@ -123,70 +159,42 @@ public final class SettingsManager {
 
 		JSONObject obj = new JSONObject();
 		obj.put(COMMAND_PREFIX, prefix);
-		obj.put(USER_NAME, u_name);
-		obj.put(USER_PASS, u_pass);
-		obj.put(NETWORK, network);
 
-		JSONArray chans = new JSONArray();
+		JSONArray networks = new JSONArray();
+		for (Server server : Boot.getBot().getServers().values()) {
+			JSONObject network = new JSONObject();
 
-		for (Entry<String, String> entry : channels.entrySet()) {
-			JSONObject chan = new JSONObject();
-			chan.put(CHANNEL_NAME, entry.getKey());
-			chan.put(CHANNEL_PASS, entry.getValue());
-			chans.put(chan);
+			JSONArray chans = new JSONArray();
+			for (Channel channel : server.getChannels().values()) {
+				JSONObject chan = new JSONObject();
+				chan.put(CHANNEL_NAME, channel.getName());
+				chan.put(CHANNEL_PASS, channel.getPass());
+
+				JSONArray disabledCommands = new JSONArray();
+				for (String command : channel.getDisabledCommands()) {
+					disabledCommands.put(command);
+				}
+				chan.put(DISABLED_COMMANDS, disabledCommands);
+				chans.put(chan);
+			}
+
+			network.put(CHANNELS, chans);
+			network.put(USER_PASS, server.getNickPass());
+			network.put(USER_NAME, server.getNick());
+			network.put(NETWORK_PASS, server.getServerPass());
+			network.put(NETWORK_NAME, server.getServerName());
+			networks.put(network);
 		}
-		obj.put(CHANNELS, chans);
+
+		obj.put(NETWORKS, networks);
 
 		FileWriter writer = new FileWriter(SETTINGS_FILE);
 		writer.write(obj.toString(5));
 		writer.close();
 	}
 
-	public static String getServer() {
-		return network;
-	}
-
 	public static String getCommandPrefix() {
 		return prefix;
-	}
-
-	public static String getNick() {
-		return u_name;
-	}
-
-	public static String getNickPass() {
-		return u_pass;
-	}
-
-	public static HashMap<String, String> getChannels() {
-		return channels;
-	}
-
-	public static void addChannel(String chan) {
-		channels.put(chan, "");
-		try {
-			save();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
-	public static void removeChannel(String chan) {
-		channels.remove(chan);
-		try {
-			save();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
-	public static void changeNick(String nick) {
-		u_name = nick;
-		try {
-			save();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 
 	public static void changeCommandPrefix(String _prefix) {

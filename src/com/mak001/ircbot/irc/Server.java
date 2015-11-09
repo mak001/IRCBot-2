@@ -14,7 +14,6 @@ import com.mak001.ircbot.irc.io.Logger;
 import com.mak001.ircbot.irc.io.OutputThread;
 
 public class Server {
-	// PIRC's Input and output thread could be put together
 
 	private final int port;
 	private final String host;
@@ -43,6 +42,10 @@ public class Server {
 		connect();
 	}
 
+	public String getServerPass() {
+		return serverPassword;
+	}
+
 	public final HashMap<String, Channel> getChannels() {
 		return channels;
 	}
@@ -51,18 +54,33 @@ public class Server {
 		return botNick;
 	}
 
+	public String getNickPass() {
+		return botPassword;
+	}
+
 	public void setNick(String newNick) {
 		botNick = newNick;
 	}
 
 	public Channel getChannelByName(String chan) {
-		return channels.get(chan);
+		return channels.get(chan.replace("[" + IRCBot.CHANNEL_PREFIXES + "]+", ""));
 	}
 
 	public final void addChannel(String channel) {
 		synchronized (channels) {
-			if (!channels.containsKey(channel))
+			if (!channels.containsKey(channel)) {
 				channels.put(channel, new Channel(channel));
+				this.joinChannel(channel);
+			}
+		}
+	}
+
+	public void addChannel(String channelName, String channelPass) {
+		synchronized (channels) {
+			if (!channels.containsKey(channelName)) {
+				channels.put(channelName, new Channel(channelName, channelPass));
+				this.joinChannel(channelName, channelPass);
+			}
 		}
 	}
 
@@ -187,7 +205,8 @@ public class Server {
 	}
 
 	public void joinChannel(String channel, String key) {
-		joinChannel(channel + " " + key);
+		channels.put(channel, new Channel(channel, key));
+		output.sendRawLine("JOIN " + channel + " " + key);
 	}
 
 	public void joinChannel(String channel) {

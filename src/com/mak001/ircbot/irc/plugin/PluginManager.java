@@ -198,8 +198,9 @@ public class PluginManager {
 			wasHelp = !onHelp(server, channel, sender, login, hostname, add);
 		}// TODO - move the about and versions?
 		Command command = commandManager.getCommand(message);
-		if (command == null)
+		if (command == null || server.getChannelByName(channel).isDisabled(command)) {
 			return false;
+		}
 		if (bot.getPermissionHandler().getUser(sender).hasPermission(command.getPermission())) {
 			if (wasHelp) {
 				command.onHelp(server, channel, sender, login, hostname);
