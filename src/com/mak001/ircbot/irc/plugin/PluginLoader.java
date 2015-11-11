@@ -35,12 +35,16 @@ public class PluginLoader {
 		System.out.println("Now loading: " + file.getName());
 		if (file != null && file.isFile() && file.toString().toLowerCase().endsWith(".jar")) {
 			try {
-				return addPluginClass(getPluginMainClass(file), file);
+				Class<?> pluginClass = getPluginMainClass(file);
+				if (pluginClass == null) {
+					throw new InvalidPluginException("No valid class in jar found");
+				}
+				return addPluginClass(pluginClass, file);
 			} catch (Exception e) {
 				throw new InvalidPluginException(e);
 			}
 		}
-		throw new InvalidPluginException();
+		throw new InvalidPluginException("Not a .jar, file, or is null.");
 	}
 
 	public Plugin reloadPlugin(Plugin plugin) throws InvalidPluginException {
@@ -60,13 +64,21 @@ public class PluginLoader {
 	}
 
 	private boolean isPluginClass(Class<?> clazz) {
-		return clazz.getSuperclass() == Plugin.class && clazz.getAnnotation(Manifest.class) != null;
+		return clazz.getSuperclass() == Plugin.class;
+	}
+
+	private boolean hasManifest(Class<?> clazz) {
+		return clazz.getAnnotation(Manifest.class) != null;
 	}
 
 	private Plugin addPluginClass(Class<?> clazz, File file) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, IOException, InvalidPluginException {
 		if (isPluginClass(clazz)) {
 			Constructor<?>[] cs = clazz.getDeclaredConstructors();
 			Constructor<?> constructor = null;
+
+			if (!hasManifest(clazz)) {
+				throw new InvalidPluginException("No Manifest.");
+			}
 
 			for (int i = 0; i < cs.length; i++) {
 				if (cs[i].getParameterTypes().length == 0) {
@@ -75,17 +87,13 @@ public class PluginLoader {
 				}
 			}
 			if (constructor == null) {
-				throw new InvalidPluginException();
+				throw new InvalidPluginException("No valid Constructor.");
 			}
 			Plugin plugin = (Plugin) constructor.newInstance();
 
-			if (plugin.getManifest() == null) {
-				System.out.println("Failed to load " + file.toString() + ".  No manifest.");
-			} else {
-				manager.addPlugin(plugin);
-				if (loaded_plugins.get(plugin.getName()) == null) {
-					loaded_plugins.put(plugin.getName(), file.getCanonicalPath());
-				}
+			manager.addPlugin(plugin);
+			if (loaded_plugins.get(plugin.getName()) == null) {
+				loaded_plugins.put(plugin.getName(), file.getCanonicalPath());
 			}
 		}
 		return null;
@@ -101,8 +109,8 @@ public class PluginLoader {
 		JarFile file = ((JarURLConnection) connection).getJarFile();
 		Enumeration<JarEntry> eje = file.entries();
 
-		ClassLoader STAFLoader = Boot.class.getClassLoader();
-		URLClassLoader URLLoader = new URLClassLoader(new URL[] { url }, STAFLoader);
+		ClassLoader classLoader = Boot.class.getClassLoader();
+		URLClassLoader URLLoader = new URLClassLoader(new URL[] { url }, classLoader);
 
 		while (eje.hasMoreElements()) {
 			JarEntry je = eje.nextElement();
