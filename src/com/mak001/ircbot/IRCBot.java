@@ -3,7 +3,6 @@ package com.mak001.ircbot;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.StringTokenizer;
 
 import com.mak001.ircbot.irc.Channel;
 import com.mak001.ircbot.irc.ReplyConstants;
@@ -11,6 +10,8 @@ import com.mak001.ircbot.irc.Server;
 import com.mak001.ircbot.irc.User;
 import com.mak001.ircbot.irc.plugin.PermissionHandler;
 import com.mak001.ircbot.irc.plugin.PluginManager;
+import com.mak001.ircbot.irc.plugin.defaults.Permissions;
+import com.mak001.ircbot.irc.plugin.defaults.RegularCommands;
 
 public class IRCBot {
 
@@ -26,6 +27,8 @@ public class IRCBot {
 		Boot.setBot(this);
 		permissionHandler = new PermissionHandler();
 		manager = new PluginManager(this);
+		manager.addPlugin(new RegularCommands());
+		manager.addPlugin(new Permissions());
 		manager.loadPluginFolder();
 	}
 
@@ -56,10 +59,9 @@ public class IRCBot {
 		String sourceLogin = "";
 		String sourceHostname = "";
 
-		// TODO - remove StringTokenizer as it is a legacy class
-		StringTokenizer tokenizer = new StringTokenizer(line);
-		String senderInfo = tokenizer.nextToken();
-		String command = tokenizer.nextToken();
+		String[] data = line.split("\\s");
+		String senderInfo = data[0];
+		String command = data[1];
 		String target = null;
 
 		int exclamation = senderInfo.indexOf("!");
@@ -71,7 +73,7 @@ public class IRCBot {
 				sourceHostname = senderInfo.substring(at + 1);
 			} else {
 
-				if (tokenizer.hasMoreTokens()) {
+				if (data.length > 2) {
 					String token = command;
 
 					int code = -1;
@@ -102,7 +104,8 @@ public class IRCBot {
 			sourceNick = sourceNick.substring(1);
 		}
 		if (target == null) {
-			target = tokenizer.nextToken();
+			// target = tokenizer.nextToken();
+			target = data[2];
 		}
 		if (target.startsWith(":")) {
 			target = target.substring(1);
@@ -199,7 +202,7 @@ public class IRCBot {
 			break;
 
 		case "KICK": // TODO
-			String recipient = tokenizer.nextToken();
+			String recipient = data[3];
 			this.onKick(server, target, sourceNick, sourceLogin, sourceHostname, recipient, line.substring(line.indexOf(" :") + 2));
 			break;
 
@@ -258,13 +261,13 @@ public class IRCBot {
 
 			server.getChannelByName(channel).setTopic(topic);
 		} else if (code == ReplyConstants.RPL_TOPICINFO) {
-			StringTokenizer tokenizer = new StringTokenizer(response);
-			tokenizer.nextToken();
-			String channel = tokenizer.nextToken();
-			String setBy = tokenizer.nextToken();
+			String[] data = response.split("\\s");
+			// TODO
+			String channel = data[1];
+			String setBy = data[2];
 			long date = 0;
 			try {
-				date = Long.parseLong(tokenizer.nextToken()) * 1000;
+				date = Long.parseLong(data[3]) * 1000;
 			} catch (NumberFormatException e) {
 				// Stick with the default value of zero.
 			}
@@ -277,9 +280,11 @@ public class IRCBot {
 			int channelEndIndex = response.indexOf(" :");
 			String channel = response.substring(response.lastIndexOf(' ', channelEndIndex - 1) + 1, channelEndIndex);
 
-			StringTokenizer tokenizer = new StringTokenizer(response.substring(response.indexOf(" :") + 2));
-			while (tokenizer.hasMoreTokens()) {
-				String nick = tokenizer.nextToken();
+			// StringTokenizer tokenizer = new
+			// StringTokenizer(response.substring(response.indexOf(" :") + 2));
+			String[] data = response.substring(response.indexOf(" :") + 2).split("\\s");
+			for (int i = 0; i < data.length; i++) {
+				String nick = data[i];
 				String prefix = "";
 				if (nick.startsWith("@")) {
 					// User is an operator in this channel.
@@ -342,6 +347,7 @@ public class IRCBot {
 		// }
 		server.getChannelByName(channel).removeUser(recipientNick);
 		// TODO - kick listener
+		manager.triggerKickListeners(server, channel, kickerNick, kickerLogin, kickerHostname, recipientNick, reason);
 	}
 
 	private void onMode(Server server, String channel, String sourceNick, String sourceLogin, String sourceHostname, String mode) {
@@ -393,5 +399,13 @@ public class IRCBot {
 
 	public Server addServer(Server server) {
 		return servers.put(server.getServerName(), server);
+	}
+
+	public Server removeServer(Server server) {
+		return removeServer(server.getServerName());
+	}
+
+	public Server removeServer(String name) {
+		return servers.remove(name);
 	}
 }

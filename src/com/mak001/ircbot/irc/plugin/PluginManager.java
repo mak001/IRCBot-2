@@ -14,6 +14,7 @@ import com.mak001.ircbot.api.Plugin;
 import com.mak001.ircbot.api.listeners.ActionListener;
 import com.mak001.ircbot.api.listeners.CTCPListener;
 import com.mak001.ircbot.api.listeners.JoinListener;
+import com.mak001.ircbot.api.listeners.KickListener;
 import com.mak001.ircbot.api.listeners.MessageListener;
 import com.mak001.ircbot.api.listeners.ModeListener;
 import com.mak001.ircbot.api.listeners.NickChangeListener;
@@ -22,6 +23,8 @@ import com.mak001.ircbot.api.listeners.PartListener;
 import com.mak001.ircbot.api.listeners.PrivateMessageListener;
 import com.mak001.ircbot.api.listeners.QuitListener;
 import com.mak001.ircbot.irc.Server;
+import com.mak001.ircbot.irc.plugin.defaults.Permissions;
+import com.mak001.ircbot.irc.plugin.defaults.RegularCommands;
 
 public class PluginManager {
 
@@ -41,6 +44,7 @@ public class PluginManager {
 	private final List<PartListener> partListeners = new ArrayList<PartListener>();
 	private final List<PrivateMessageListener> privateMessageListeners = new ArrayList<PrivateMessageListener>();
 	private final List<QuitListener> quitListeners = new ArrayList<QuitListener>();
+	private final List<KickListener> kickListeners = new ArrayList<KickListener>();
 
 	public PluginManager(IRCBot bot) {
 		this.bot = bot;
@@ -54,6 +58,7 @@ public class PluginManager {
 		listeners.add(partListeners);
 		listeners.add(privateMessageListeners);
 		listeners.add(quitListeners);
+		listeners.add(kickListeners);
 
 		pluginLoader = new PluginLoader(this);
 		commandManager = new CommandManager();
@@ -91,7 +96,7 @@ public class PluginManager {
 	}
 
 	public synchronized void addPlugin(Plugin plugin) {
-		if (plugins.get(plugin.getName()) == null) {
+		if (plugins.get(plugin.getName()) == null && plugin.isValid()) {
 			plugins.put(plugin.getName(), plugin);
 			commandManager.addPluginCommand(plugin);
 			registerListeners(plugin);
@@ -130,6 +135,9 @@ public class PluginManager {
 		}
 		if (plugin instanceof QuitListener) {
 			quitListeners.add((QuitListener) plugin);
+		}
+		if (plugin instanceof KickListener) {
+			kickListeners.add((KickListener) plugin);
 		}
 	}
 
@@ -199,6 +207,7 @@ public class PluginManager {
 		}// TODO - move the about and versions?
 		Command command = commandManager.getCommand(message);
 		if (command == null || server.getChannelByName(channel).isDisabled(command)) {
+			//
 			return false;
 		}
 		if (bot.getPermissionHandler().getUser(sender).hasPermission(command.getPermission())) {
@@ -293,6 +302,12 @@ public class PluginManager {
 		}
 	}
 
+	public void triggerKickListeners(Server server, String channel, String kickerNick, String kickerLogin, String kickerHostname, String recipientNick, String reason) {
+		for (KickListener listener : kickListeners) {
+			listener.onKick(server, channel, kickerNick, kickerLogin, kickerHostname, recipientNick, reason);
+		}
+	}
+
 	public void triggerFingerListeners(Server server, String sourceNick, String sourceLogin, String sourceHostname, String target) {
 		for (CTCPListener listener : ctcpListeners) {
 			listener.onFinger(server, sourceNick, sourceLogin, sourceHostname, target);
@@ -331,22 +346,12 @@ public class PluginManager {
 		return plugins.values();
 	}
 
-	/*
-	 * private boolean isPermissions(Plugin p) { return
-	 * p.getName().equals("Permissions") && p instanceof Permissions; }
-	 * 
-	 * private boolean isDefault(Plugin p) { return
-	 * p.getName().equals("Default commands") && p instanceof RegularCommands; }
-	 */
-
 	private boolean isDefault(Plugin plugin) {
-		// TODO Auto-generated method stub
-		return false;
+		return plugin instanceof RegularCommands;
 	}
 
 	private boolean isPermissions(Plugin plugin) {
-		// TODO Auto-generated method stub
-		return false;
+		return plugin instanceof Permissions;
 	}
 
 	public void loadPluginFolder() {

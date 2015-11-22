@@ -63,7 +63,10 @@ public class Server {
 	}
 
 	public Channel getChannelByName(String chan) {
-		return channels.get(chan.replace("[" + IRCBot.CHANNEL_PREFIXES + "]+", ""));
+		synchronized (channels) {
+			// return channels.get(chan);
+			return channels.get(chan.replace("[" + IRCBot.CHANNEL_PREFIXES + "]+", ""));
+		}
 	}
 
 	public final void addChannel(String channel) {

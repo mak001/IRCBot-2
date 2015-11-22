@@ -36,6 +36,8 @@ public abstract class Plugin {
 	 * @return The name of the plugin
 	 */
 	public final String getName() {
+		if (getManifest() == null)
+			return null;
 		return getManifest().name();
 	}
 
@@ -104,6 +106,12 @@ public abstract class Plugin {
 				return true;
 		}
 		return false;
+	}
+
+	public final boolean isValid() {
+		if (getManifest() == null)
+			return false;
+		return true;
 	}
 
 }

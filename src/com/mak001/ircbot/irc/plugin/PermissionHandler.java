@@ -13,18 +13,16 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.mak001.ircbot.SettingsManager;
-import com.mak001.ircbot.irc.User;
 
 // TODO - make permissions be able to take wild cards
 public class PermissionHandler {
 
-	private final List<User> users = new ArrayList<User>();
+	private final List<PermissionUser> users = new ArrayList<PermissionUser>();
 	private final static String USERS = "USERS";
-	private static final String USER_FILE_STRING = SettingsManager.SETTINGS_FOLDER
-			+ "user.json";
+	private static final String USER_FILE_STRING = SettingsManager.SETTINGS_FOLDER + "user.json";
 	private static final File USER_FILE = new File(USER_FILE_STRING);
 
-	private final User DEFAULT_USER = new User("default");
+	private final PermissionUser DEFAULT_USER = new PermissionUser("default");
 
 	public PermissionHandler() {
 		try {
@@ -34,12 +32,12 @@ public class PermissionHandler {
 		}
 	}
 
-	public List<User> getUsers() {
+	public List<PermissionUser> getUsers() {
 		return users;
 	}
 
-	public User getUser(String name) {
-		for (User u : users) {
+	public PermissionUser getUser(String name) {
+		for (PermissionUser u : users) {
 			if (u.getName().equalsIgnoreCase(name))
 				return u;
 		}
@@ -56,7 +54,7 @@ public class PermissionHandler {
 	 */
 	public void addPermission(String user, String permission) {
 		if (getUser(user).equals(DEFAULT_USER)) {
-			User u = new User(user);
+			PermissionUser u = new PermissionUser(user);
 			u.addPermission(permission);
 			users.add(u);
 		} else {
@@ -90,14 +88,14 @@ public class PermissionHandler {
 
 			for (int i = 0; i < _users.length(); i++) {
 				JSONObject user = _users.getJSONObject(i);
-				JSONArray user_perms = user.getJSONArray(User.PERMISSIONS);
+				JSONArray user_perms = user.getJSONArray(PermissionUser.PERMISSIONS);
 
 				List<String> perms = new ArrayList<String>();
 				for (int j = 0; j < user_perms.length(); j++) {
 					perms.add(user_perms.getString(j));
 				}
 
-				User u = new User(user.getString(User.NAME), perms);
+				PermissionUser u = new PermissionUser(user.getString(PermissionUser.NAME), perms);
 				if (!users.contains(u))
 					users.add(u);
 			}
@@ -109,8 +107,7 @@ public class PermissionHandler {
 
 	private String getFileText(File file) throws IOException {
 		StringBuilder response = new StringBuilder();
-		BufferedReader input = new BufferedReader(new InputStreamReader(
-				new FileInputStream(file)));
+		BufferedReader input = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
 		String strLine = null;
 		while ((strLine = input.readLine()) != null) {
 			response.append(strLine);
@@ -131,8 +128,8 @@ public class PermissionHandler {
 		perms.add("main.shutdown");
 		perms.add("perms.add");
 		perms.add("perms.remove");
-		users.add(new User("mak001", perms));
-		users.add(new User("import", perms));
+		users.add(new PermissionUser("mak001", perms));
+		users.add(new PermissionUser("import", perms));
 		save();
 	}
 
@@ -144,7 +141,7 @@ public class PermissionHandler {
 	public void save() throws IOException { // TODO
 		JSONObject obj = new JSONObject();
 		JSONArray array = new JSONArray();
-		for (User user : users) {
+		for (PermissionUser user : users) {
 			array.put(user.getSaveObject());
 		}
 		obj.put(USERS, array);
