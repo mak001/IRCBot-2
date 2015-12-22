@@ -166,9 +166,7 @@ public class Server {
 
 		log("Starting input");
 		input.start();
-		this.log("*** Logged onto server.");
-
-		bot.onConnect(this);
+		log("*** Logged onto server.");
 	}
 
 	public InputThread getInputThread() {

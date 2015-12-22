@@ -12,7 +12,9 @@ import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.mak001.ircbot.Boot;
 import com.mak001.ircbot.SettingsManager;
+import com.mak001.ircbot.irc.Server;
 
 // TODO - make permissions be able to take wild cards
 public class PermissionHandler {
@@ -22,7 +24,7 @@ public class PermissionHandler {
 	private static final String USER_FILE_STRING = SettingsManager.SETTINGS_FOLDER + "user.json";
 	private static final File USER_FILE = new File(USER_FILE_STRING);
 
-	private final PermissionUser DEFAULT_USER = new PermissionUser("default");
+	private final PermissionUser DEFAULT_USER = new PermissionUser("default", null);
 
 	public PermissionHandler() {
 		try {
@@ -52,9 +54,9 @@ public class PermissionHandler {
 	 * @param permission
 	 *            - The permission node to add
 	 */
-	public void addPermission(String user, String permission) {
+	public void addPermission(Server server, String user, String permission) {
 		if (getUser(user).equals(DEFAULT_USER)) {
-			PermissionUser u = new PermissionUser(user);
+			PermissionUser u = new PermissionUser(user, server);
 			u.addPermission(permission);
 			users.add(u);
 		} else {
@@ -95,7 +97,14 @@ public class PermissionHandler {
 					perms.add(user_perms.getString(j));
 				}
 
-				PermissionUser u = new PermissionUser(user.getString(PermissionUser.NAME), perms);
+				Server server;
+				if (user.getString(PermissionUser.SERVER).equals("null")) {
+					server = null;
+				} else {
+					server = Boot.getBot().getServer(user.getString(PermissionUser.SERVER));
+				}
+
+				PermissionUser u = new PermissionUser(user.getString(PermissionUser.NAME), perms, server);
 				if (!users.contains(u))
 					users.add(u);
 			}
@@ -128,8 +137,8 @@ public class PermissionHandler {
 		perms.add("main.shutdown");
 		perms.add("perms.add");
 		perms.add("perms.remove");
-		users.add(new PermissionUser("mak001", perms));
-		users.add(new PermissionUser("import", perms));
+		users.add(new PermissionUser("mak001", perms, null));
+		users.add(new PermissionUser("import", perms, null));
 		save();
 	}
 
@@ -148,5 +157,35 @@ public class PermissionHandler {
 		FileWriter writer = new FileWriter(USER_FILE);
 		writer.write(obj.toString(5));
 		writer.close();
+	}
+
+	public enum RankPermission {
+
+		VOICE("VOICE"),
+		HALF_OP("HOP", VOICE),
+		OP("OP", HALF_OP, VOICE),
+		PROTECTED_OP("SOP", OP, HALF_OP, VOICE),
+		FOUNDER("FOUNDER", PROTECTED_OP, OP, HALF_OP, VOICE);
+
+		private final String name;
+		private final RankPermission[] lowerRanks;
+		
+		private RankPermission(String name, RankPermission... lower) {
+			this.name = name;
+			lowerRanks = lower;
+		}
+
+		public final String getName() {
+			return name;
+		}
+		
+		public final RankPermission[] getLowerRanks(){
+			return lowerRanks;
+		}
+
+		@Override
+		public final String toString() {
+			return name;
+		}
 	}
 }

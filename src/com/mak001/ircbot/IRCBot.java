@@ -384,11 +384,6 @@ public class IRCBot {
 		return message.substring(0, 1).equals(SettingsManager.getCommandPrefix());
 	}
 
-	public void onConnect(Server server) {
-		// TODO Auto-generated method stub
-		// server.joinChannel("#mak");
-	}
-
 	public HashMap<String, Server> getServers() {
 		return servers;
 	}

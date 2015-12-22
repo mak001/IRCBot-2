@@ -210,7 +210,7 @@ public class PluginManager {
 			//
 			return false;
 		}
-		if (bot.getPermissionHandler().getUser(sender).hasPermission(command.getPermission())) {
+		if (bot.getPermissionHandler().getUser(sender).hasPermission(command.getPermission(), channel)) {
 			if (wasHelp) {
 				command.onHelp(server, channel, sender, login, hostname);
 				return true;
@@ -243,7 +243,7 @@ public class PluginManager {
 			if (plugin != null) {
 				server.sendMessage(sender, "This will list every commands from " + plugin.getName());
 				for (Command c : commandManager.getCommands(plugin.getName())) {
-					if (bot.getPermissionHandler().getUser(sender).hasPermission(c.getPermission())) {
+					if (bot.getPermissionHandler().getUser(sender).hasPermission(c.getPermission(), channel)) {
 						c.onHelp(server, channel, sender, login, hostname);
 					}
 				}

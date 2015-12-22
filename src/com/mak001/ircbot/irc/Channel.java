@@ -248,6 +248,10 @@ public class Channel {
 	public HashMap<String, User> getUsers() {
 		return users;
 	}
+	
+	public User getUserByName(String name){
+		return users.get(name);
+	}
 
 	public ArrayList<String> getDisabledCommands() {
 		return disabledCommands;
