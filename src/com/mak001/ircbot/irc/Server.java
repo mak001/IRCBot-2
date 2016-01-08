@@ -2,6 +2,7 @@ package com.mak001.ircbot.irc;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
@@ -169,10 +170,6 @@ public class Server {
 		log("*** Logged onto server.");
 	}
 
-	public InputThread getInputThread() {
-		return input;
-	}
-
 	public OutputThread getOutputThread() {
 		return output;
 	}
@@ -191,6 +188,12 @@ public class Server {
 
 	public void sendMessage(String target, String message) {
 		output.sendRawLine("PRIVMSG " + target + " :" + message);
+	}
+
+	public void sendAMSG(String message) {
+		for (String chan : channels.keySet()) {
+			sendMessage(chan, message);
+		}
 	}
 
 	public void sendNotice(String target, String message) {
@@ -249,5 +252,15 @@ public class Server {
 
 	public void setMode(String channel, String mode) {
 		this.sendRawLine("MODE " + channel + " " + mode);
+	}
+
+	public void dispose() {
+		output.dispose();
+		input.dispose();
+		try {
+			socket.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }

@@ -39,5 +39,4 @@ public class Boot {
 	protected static void setBot(IRCBot ircbot) {
 		bot = ircbot;
 	}
-
 }

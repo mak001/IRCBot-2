@@ -1,5 +1,6 @@
 package com.mak001.ircbot;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -8,6 +9,7 @@ import com.mak001.ircbot.irc.Channel;
 import com.mak001.ircbot.irc.ReplyConstants;
 import com.mak001.ircbot.irc.Server;
 import com.mak001.ircbot.irc.User;
+import com.mak001.ircbot.irc.io.Logger;
 import com.mak001.ircbot.irc.plugin.PermissionHandler;
 import com.mak001.ircbot.irc.plugin.PluginManager;
 import com.mak001.ircbot.irc.plugin.defaults.Permissions;
@@ -17,6 +19,7 @@ public class IRCBot {
 
 	public final static String ident = "Mak001s.bot.v2";
 	public static final String CHANNEL_PREFIXES = "#&+!";
+	public static final String VERSION = "2.001";
 
 	private final PermissionHandler permissionHandler;
 	private final PluginManager manager;
@@ -224,12 +227,14 @@ public class IRCBot {
 			break;
 
 		case "INVITE":
+			server.joinChannel(line.substring(line.indexOf(" :") + 2));
 			// TODO
 			// this.onInvite(server, target, sourceNick, sourceLogin,
 			// sourceHostname, line.substring(line.indexOf(" :") + 2));
 			break;
 
 		default: // Unknown
+			Boot.getLogger().log(Logger.LogType.BOT, "Unknown --- " + line);
 			break;
 		}
 	}
@@ -402,5 +407,18 @@ public class IRCBot {
 
 	public Server removeServer(String name) {
 		return servers.remove(name);
+	}
+
+	public void shutDown(Server server, String sender) {
+		try {
+			SettingsManager.save();
+			permissionHandler.save();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		for (Server s : servers.values()) {
+			s.quit("Shutdown requested by " + sender + " from " + server.getServerName());
+			s.dispose();
+		}
 	}
 }

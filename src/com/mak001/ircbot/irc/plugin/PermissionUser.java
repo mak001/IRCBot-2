@@ -72,6 +72,7 @@ public class PermissionUser {
 		if (server == null)
 			return false;
 		User user = server.getChannelByName(channel).getUserByName(nick);
+		
 		switch (p) {
 		case FOUNDER:
 			if (user.getModes().contains(Mode.FOUNDER))

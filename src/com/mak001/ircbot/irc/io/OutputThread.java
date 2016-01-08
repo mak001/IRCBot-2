@@ -8,6 +8,8 @@ public class OutputThread extends Thread {
 
 	private BufferedWriter writer;
 	private Queue queue;
+	private boolean running = true;
+	private long delay = 1000;
 
 	public OutputThread(BufferedWriter writer) {
 		this.writer = writer;
@@ -31,17 +33,26 @@ public class OutputThread extends Thread {
 
 	@Override
 	public void run() {
-		boolean running = true;
-		while (running == true) {
-			// TODO - message delay
-			// Thread.sleep(_bot.getMessageDelay());
+		try {
+			while (running == true || queue.hasNext()) {
+				Thread.sleep(delay);
 
-			String line = (String) queue.next();
-			if (line != null) {
-				sendLine(line);
-			} else {
-				running = false;
+				String line = (String) queue.next();
+				if (line != null) {
+					sendLine(line);
+				} else {
+					running = false;
+				}
 			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
 		}
+	}
+
+	/**
+	 * will finish outputting the queue and then stop
+	 */
+	public void dispose() {
+		running = false;
 	}
 }

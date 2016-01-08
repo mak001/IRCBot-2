@@ -15,6 +15,7 @@ public class InputThread extends Thread {
 	private final IRCBot bot;
 	private BufferedReader reader;
 	private Server server;
+	private boolean running = true;
 
 	public InputThread(IRCBot bot, Server server, BufferedReader reader) {
 		this.bot = bot;
@@ -25,7 +26,6 @@ public class InputThread extends Thread {
 	@Override
 	public void run() {
 		try {
-			boolean running = true;
 			while (running) {
 				try {
 					String line = null;
@@ -56,5 +56,9 @@ public class InputThread extends Thread {
 			}
 		} catch (Exception e) {
 		}
+	}
+
+	public void dispose() {
+		running = false;
 	}
 }

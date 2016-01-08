@@ -22,6 +22,7 @@ public class User {
 	public User(String nick) {
 		this.nick = nick;
 	}
+
 	/**
 	 * Changes the user's nick.
 	 * 
@@ -124,8 +125,8 @@ public class User {
 	public boolean removeModes(List<Mode> modeList) {
 		return MODES.removeAll(modeList);
 	}
-	
-	public List<Mode> getModes(){
+
+	public List<Mode> getModes() {
 		return MODES;
 	}
 

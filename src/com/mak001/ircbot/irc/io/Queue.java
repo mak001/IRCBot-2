@@ -65,7 +65,6 @@ public class Queue {
 			}
 			s = queue.getFirst();
 			queue.remove(0);
-
 		}
 		return s;
 	}

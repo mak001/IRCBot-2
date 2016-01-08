@@ -1,6 +1,7 @@
 package com.mak001.ircbot.api;
 
 import com.mak001.ircbot.Boot;
+import com.mak001.ircbot.IRCBot;
 import com.mak001.ircbot.irc.io.Logger.LogType;
 
 /**
@@ -76,6 +77,10 @@ public abstract class Plugin {
 		return GENERAL_COMMAND;
 	}
 
+	public final IRCBot getBot() {
+		return Boot.getBot();
+	}
+
 	/**
 	 * Registers a command
 	 * 
@@ -84,7 +89,7 @@ public abstract class Plugin {
 	 * @return If the command could be registered
 	 */
 	public final boolean registerCommand(Command command) {
-		return Boot.getBot().getPluginManager().registerCommand(command);
+		return getBot().getPluginManager().registerCommand(command);
 	}
 
 	/**
