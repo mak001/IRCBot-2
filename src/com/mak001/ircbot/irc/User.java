@@ -58,6 +58,8 @@ public class User {
 	 * @return - If the mode was added.
 	 */
 	public boolean addMode(Mode mode) {
+		if (MODES.contains(mode))
+			return true;
 		return MODES.add(mode);
 	}
 
@@ -71,7 +73,7 @@ public class User {
 	public boolean addModes(Mode[] modeList) {
 		boolean b = true;
 		for (Mode mode : modeList) {
-			if (!MODES.add(mode))
+			if (!addMode(mode))
 				b = false;
 		}
 		return b;

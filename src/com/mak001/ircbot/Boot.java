@@ -10,8 +10,12 @@ public class Boot {
 	private static IRCBot bot;
 
 	public static void main(String[] argsList) throws Exception {
-		new IRCBot();
+		bot = new IRCBot();
 		SettingsManager.load();
+		bot.pluginManager();
+		bot.permissionHandler();
+
+		bot.connect();
 
 		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
 
@@ -34,9 +38,5 @@ public class Boot {
 
 	public static IRCBot getBot() {
 		return bot;
-	}
-
-	protected static void setBot(IRCBot ircbot) {
-		bot = ircbot;
 	}
 }

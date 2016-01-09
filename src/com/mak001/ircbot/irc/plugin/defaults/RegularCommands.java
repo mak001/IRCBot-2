@@ -8,6 +8,7 @@ import com.mak001.ircbot.api.Manifest;
 import com.mak001.ircbot.api.Plugin;
 import com.mak001.ircbot.irc.Server;
 import com.mak001.ircbot.irc.plugin.InvalidPluginException;
+import com.mak001.ircbot.irc.plugin.PermissionHandler.RankPermission;
 
 @Manifest(authors = { "MAK001" }, name = "Default Commands")
 public class RegularCommands extends Plugin {
@@ -23,6 +24,8 @@ public class RegularCommands extends Plugin {
 		registerCommand(join);
 		registerCommand(part);
 		registerCommand(nick);
+		registerCommand(disableCommand);
+		registerCommand(enableCommand);
 		registerCommand(set);
 		registerCommand(broadcast);
 		registerCommand(load_plugin);
@@ -55,6 +58,21 @@ public class RegularCommands extends Plugin {
 		}
 	});
 
+	private Command broadcast = new Command(this, "BROADCAST", admin, new CommandAction() {
+
+		@Override
+		public void onCommand(Server server, String channel, String sender, String login, String hostname, String additional) {
+			for (String chan : server.getChannels().keySet()) {
+				server.sendMessage(chan, additional);
+			}
+		}
+
+		@Override
+		public void onHelp(Server server, String channel, String sender, String login, String hostname) {
+			server.sendMessage(sender, "Broadcasts a specified sting in all joined channels");
+		}
+	});
+
 	private Command join = new Command(this, "JOIN", admin, new CommandAction() {
 
 		@Override
@@ -82,7 +100,7 @@ public class RegularCommands extends Plugin {
 		public void onCommand(Server server, String channel, String sender, String login, String hostname, String additional) {
 			if (additional != null && additional.equals("") && channel != null && !channel.equals("")) {
 				// server.removeChannel(channel);
-			}// TODO?
+			} // TODO?
 			if (!additional.contains(" ")) {
 				if (isChannel(additional)) {
 					server.removeChannel(additional);
@@ -97,6 +115,34 @@ public class RegularCommands extends Plugin {
 		@Override
 		public void onHelp(Server server, String channel, String sender, String login, String hostname) {
 			server.sendMessage(sender, "Leaves a channel : Syntax: " + prefix + "[LEAVE | PART] <CHANNEL_NAME>");
+		}
+	});
+
+	private Command disableCommand = new Command(this, "disableCommand", RankPermission.OP.toString(), new CommandAction() {
+
+		@Override
+		public void onCommand(Server server, String channel, String sender, String login, String hostname, String additional) {
+			server.getChannelByName(channel).disableCommand(additional.replace(SettingsManager.getCommandPrefix(), ""));
+			server.sendMessage(channel, additional.replace(SettingsManager.getCommandPrefix(), "") + " has been disabled for " + channel);
+		}
+
+		@Override
+		public void onHelp(Server server, String channel, String sender, String login, String hostname) {
+			server.sendMessage(channel, "Disables a command for the channel it is run in.");
+		}
+	});
+
+	private Command enableCommand = new Command(this, "enableCommand", RankPermission.OP.toString(), new CommandAction() {
+
+		@Override
+		public void onCommand(Server server, String channel, String sender, String login, String hostname, String additional) {
+			server.getChannelByName(channel).enableCommand(additional.replace(SettingsManager.getCommandPrefix(), ""));
+			server.sendMessage(channel, additional.replace(SettingsManager.getCommandPrefix(), "") + " has been re-enabled for " + channel);
+		}
+
+		@Override
+		public void onHelp(Server server, String channel, String sender, String login, String hostname) {
+			server.sendMessage(channel, "Re-enables a command for the channel it is run in.");
 		}
 	});
 
@@ -135,21 +181,6 @@ public class RegularCommands extends Plugin {
 		public void onHelp(Server server, String channel, String sender, String login, String hostname) {
 			server.sendMessage(sender, "Changes the server's default nick to use : Syntax: " + prefix + "SET NICK <NEW_NICK>");
 			server.sendMessage(sender, "Changes the bot's default command <PREFIX> (what commands start with)  : Syntax: " + prefix + "SET COMMAND_PREFIX <PREFIX>");
-		}
-	});
-
-	private Command broadcast = new Command(this, "BROADCAST", admin, new CommandAction() {
-
-		@Override
-		public void onCommand(Server server, String channel, String sender, String login, String hostname, String additional) {
-			for (String chan : server.getChannels().keySet()) {
-				server.sendMessage(chan, additional);
-			}
-		}
-
-		@Override
-		public void onHelp(Server server, String channel, String sender, String login, String hostname) {
-			server.sendMessage(sender, "Broadcasts a specified sting in all joined channels");
 		}
 	});
 

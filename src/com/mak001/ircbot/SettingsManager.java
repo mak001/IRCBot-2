@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.mak001.ircbot.gui.SetUp;
@@ -62,9 +63,12 @@ public final class SettingsManager {
 	/**
 	 * Loads the settings
 	 * 
+	 * @throws IOException
+	 * @throws JSONException
+	 * 
 	 * @throws Exception
 	 */
-	public static void load() throws Exception {
+	public static void load() throws JSONException, IOException {
 		// TODO
 		if (SETTINGS_FILE.exists()) {
 			JSONObject obj = new JSONObject(getFileText(SETTINGS_FILE));

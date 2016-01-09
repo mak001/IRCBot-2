@@ -248,8 +248,8 @@ public class Channel {
 	public HashMap<String, User> getUsers() {
 		return users;
 	}
-	
-	public User getUserByName(String name){
+
+	public User getUserByName(String name) {
 		return users.get(name);
 	}
 
@@ -258,13 +258,30 @@ public class Channel {
 	}
 
 	public boolean disableCommand(String command) {
-		return disabledCommands.add(command);
+		if (Boot.getBot().getPluginManager().getCommands().keySet().contains(command)) {
+			return disabledCommands.add(command);
+		}
+		return false;
 	}
 
 	public boolean isDisabled(Command command) {
 		for (String s : command.getCommand()) {
 			if (disabledCommands.contains(s))
 				return true;
+		}
+		return false;
+	}
+	
+	public boolean isDisabled(String command) {
+		if (disabledCommands.contains(command))
+			return true;
+		return false;
+	}
+	
+	public boolean enableCommand(String command){
+		if (isDisabled(command)){
+			disabledCommands.remove(command);
+			return true;
 		}
 		return false;
 	}

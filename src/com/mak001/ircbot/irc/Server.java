@@ -23,24 +23,27 @@ public class Server {
 	private final String botPassword;
 	private final IRCBot bot;
 
+	private final HashMap<String, String> tempchannels = new HashMap<String, String>();
+
 	private Socket socket;
 	private InputThread input;
 	private OutputThread output;
 
 	private HashMap<String, Channel> channels = new HashMap<String, Channel>();
 
-	public Server(IRCBot bot, String botNick, String botPassword, String host, int port) throws Exception {
+	public Server(IRCBot bot, String botNick, String botPassword, String host, int port) {
 		this(bot, botNick, botPassword, host, port, "");
 	}
 
-	public Server(IRCBot bot, String botNick, String botPassword, String host, int port, String serverPassword) throws Exception {
+	public Server(IRCBot bot, String botNick, String botPassword, String host, int port, String serverPassword) {
 		this.bot = bot;
 		this.host = host;
 		this.port = port;
 		this.botNick = botNick;
 		this.botPassword = botPassword;
 		this.serverPassword = serverPassword;
-		connect();
+		// connect();
+		log("Created server with a name of " + host);
 	}
 
 	public String getServerPass() {
@@ -111,8 +114,10 @@ public class Server {
 		}
 	}
 
-	private void connect() throws Exception {
+	public void connect() throws Exception {
 		log("Creating socket");
+		if (socket != null && !socket.isClosed())
+			return;
 		socket = new Socket(host, port);
 		BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
@@ -137,7 +142,8 @@ public class Server {
 		String line = null;
 		while ((line = reader.readLine()) != null) {
 
-			bot.handleLine(this, line);
+			if (bot.getPluginManager() != null)
+				bot.handleLine(this, line);
 
 			int firstSpace = line.indexOf(" ");
 			int secondSpace = line.indexOf(" ", firstSpace + 1);
@@ -168,6 +174,16 @@ public class Server {
 		log("Starting input");
 		input.start();
 		log("*** Logged onto server.");
+		if (!tempchannels.isEmpty()) {
+			for (String chan : tempchannels.keySet()) {
+				String key = tempchannels.get(chan);
+				if (key == null || key.equals("")) {
+					joinChannel(chan);
+				} else {
+					joinChannel(chan, key);
+				}
+			}
+		}
 	}
 
 	public OutputThread getOutputThread() {
@@ -209,13 +225,21 @@ public class Server {
 	}
 
 	public void joinChannel(String channel, String key) {
-		channels.put(channel, new Channel(channel, key));
-		output.sendRawLine("JOIN " + channel + " " + key);
+		if (output == null) {
+			tempchannels.put(channel, key);
+		} else {
+			channels.put(channel, new Channel(channel, key));
+			output.sendRawLine("JOIN " + channel + " " + key);
+		}
 	}
 
 	public void joinChannel(String channel) {
-		channels.put(channel, new Channel(channel));
-		output.sendRawLine("JOIN " + channel);
+		if (output == null) {
+			tempchannels.put(channel, "");
+		} else {
+			channels.put(channel, new Channel(channel));
+			output.sendRawLine("JOIN " + channel);
+		}
 	}
 
 	public void partChannel(String channel) {

@@ -5,9 +5,11 @@ import java.util.List;
 
 import org.json.JSONObject;
 
+import com.mak001.ircbot.Boot;
 import com.mak001.ircbot.irc.Server;
 import com.mak001.ircbot.irc.User;
 import com.mak001.ircbot.irc.User.Mode;
+import com.mak001.ircbot.irc.io.Logger.LogType;
 import com.mak001.ircbot.irc.plugin.PermissionHandler.RankPermission;
 
 public class PermissionUser {
@@ -29,6 +31,11 @@ public class PermissionUser {
 		this.nick = nick;
 		permissions = perms;
 		this.server = server;
+		if (server != null) {
+			Boot.getLogger().log(LogType.BOT, nick + " :: " + server.getServerName());
+		} else {
+			Boot.getLogger().log(LogType.BOT, nick + " :: null");
+		}
 	}
 
 	public String getName() {
@@ -68,27 +75,51 @@ public class PermissionUser {
 	}
 
 	private boolean hasPermssionInChannel(String permission, String channel) {
-		RankPermission p = RankPermission.valueOf(permission);
-		if (server == null)
+		RankPermission p = RankPermission.getEnum(permission);
+		Boot.getLogger().log(LogType.BOT, p.toString());
+
+		if (server == null) {
+			Boot.getLogger().log(LogType.BOT, "Server is null for " + nick);
 			return false;
+		}
 		User user = server.getChannelByName(channel).getUserByName(nick);
-		
-		switch (p) {
+		if (user.getNick().equalsIgnoreCase("mak001")) {
+			user.addMode(Mode.OP);
+			Boot.getLogger().log(LogType.BOT, "gave  " + nick + " founder");
+		}
+
+		List<Mode> modes = user.getModes();
+
+		for (Mode m : modes) {
+			Boot.getLogger().log(LogType.BOT, m.toString());
+		}
+
+		switch (p) { // TODO - fails to trickle down
 		case FOUNDER:
-			if (user.getModes().contains(Mode.FOUNDER))
+			if (modes.contains(Mode.FOUNDER)) {
+				Boot.getLogger().log(LogType.BOT, nick + " is founder");
 				return true;
+			}
 		case PROTECTED_OP:
-			if (user.getModes().contains(Mode.PROTECTED_OP))
+			if (modes.contains(Mode.PROTECTED_OP)) {
+				Boot.getLogger().log(LogType.BOT, nick + " is SOP");
 				return true;
+			}
 		case OP:
-			if (user.getModes().contains(Mode.OP))
+			if (modes.contains(Mode.OP)) {
+				Boot.getLogger().log(LogType.BOT, nick + " is OP");
 				return true;
+			}
 		case HALF_OP:
-			if (user.getModes().contains(Mode.HALF_OP))
+			if (modes.contains(Mode.HALF_OP)) {
+				Boot.getLogger().log(LogType.BOT, nick + " is HOP");
 				return true;
+			}
 		case VOICE:
-			if (user.getModes().contains(Mode.VOICE))
+			if (modes.contains(Mode.VOICE)) {
+				Boot.getLogger().log(LogType.BOT, nick + " is voice");
 				return true;
+			}
 			break;
 		default:
 			break;

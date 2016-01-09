@@ -21,20 +21,31 @@ public class IRCBot {
 	public static final String CHANNEL_PREFIXES = "#&+!";
 	public static final String VERSION = "2.001";
 
-	private final PermissionHandler permissionHandler;
-	private final PluginManager manager;
+	private PermissionHandler permissionHandler;
+	private PluginManager manager;
 
 	private final HashMap<String, Server> servers = new HashMap<String, Server>();
 
 	public IRCBot() {
-		Boot.setBot(this);
+	}
+
+	protected void permissionHandler() {
 		permissionHandler = new PermissionHandler();
+	}
+
+	protected void pluginManager() {
 		manager = new PluginManager(this);
 		manager.addPlugin(new RegularCommands());
 		manager.addPlugin(new Permissions());
 		manager.loadPluginFolder();
 	}
 
+	protected void connect() throws Exception{
+		for (Server s : servers.values()){
+			s.connect();
+		}
+	}
+	
 	public PermissionHandler getPermissionHandler() {
 		return permissionHandler;
 	}

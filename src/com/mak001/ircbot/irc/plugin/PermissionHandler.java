@@ -97,6 +97,8 @@ public class PermissionHandler {
 					perms.add(user_perms.getString(j));
 				}
 
+				String name = user.getString(PermissionUser.NAME);
+
 				Server server;
 				if (user.getString(PermissionUser.SERVER).equals("null")) {
 					server = null;
@@ -104,7 +106,7 @@ public class PermissionHandler {
 					server = Boot.getBot().getServer(user.getString(PermissionUser.SERVER));
 				}
 
-				PermissionUser u = new PermissionUser(user.getString(PermissionUser.NAME), perms, server);
+				PermissionUser u = new PermissionUser(name, perms, server);
 				if (!users.contains(u))
 					users.add(u);
 			}
@@ -169,7 +171,7 @@ public class PermissionHandler {
 
 		private final String name;
 		private final RankPermission[] lowerRanks;
-		
+
 		private RankPermission(String name, RankPermission... lower) {
 			this.name = name;
 			lowerRanks = lower;
@@ -178,14 +180,23 @@ public class PermissionHandler {
 		public final String getName() {
 			return name;
 		}
-		
-		public final RankPermission[] getLowerRanks(){
+
+		public final RankPermission[] getLowerRanks() {
 			return lowerRanks;
 		}
 
 		@Override
 		public final String toString() {
 			return name;
+		}
+
+		public static RankPermission getEnum(String value) {
+			for (RankPermission v : values()) {
+				if (v.getName().equalsIgnoreCase(value)) {
+					return v;
+				}
+			}
+			return null;
 		}
 	}
 }

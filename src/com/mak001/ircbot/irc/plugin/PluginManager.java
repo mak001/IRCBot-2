@@ -204,9 +204,10 @@ public class PluginManager {
 		if (message.toUpperCase().startsWith("HELP")) {
 			String add = message.replaceFirst("(?i)HELP", "").replaceFirst(" ", "");
 			wasHelp = !onHelp(server, channel, sender, login, hostname, add);
-		}// TODO - move the about and versions?
+		} // TODO - move the about and versions?
 		Command command = commandManager.getCommand(message);
 		if (command == null || server.getChannelByName(channel).isDisabled(command)) {
+			// TODO - doesnt seem to work
 			//
 			return false;
 		}
