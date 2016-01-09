@@ -82,43 +82,43 @@ public class PermissionUser {
 			Boot.getLogger().log(LogType.BOT, "Server is null for " + nick);
 			return false;
 		}
+
 		User user = server.getChannelByName(channel).getUserByName(nick);
-		if (user.getNick().equalsIgnoreCase("mak001")) {
-			user.addMode(Mode.OP);
-			Boot.getLogger().log(LogType.BOT, "gave  " + nick + " founder");
-		}
-
 		List<Mode> modes = user.getModes();
-
-		for (Mode m : modes) {
-			Boot.getLogger().log(LogType.BOT, m.toString());
-		}
-
-		switch (p) { // TODO - fails to trickle down
+		switch (p) {
 		case FOUNDER:
-			if (modes.contains(Mode.FOUNDER)) {
-				Boot.getLogger().log(LogType.BOT, nick + " is founder");
-				return true;
+			for (Mode m : modes) {
+				if (m.equals(Mode.FOUNDER)) {
+					return true;
+				}
 			}
+			break;
 		case PROTECTED_OP:
-			if (modes.contains(Mode.PROTECTED_OP)) {
-				Boot.getLogger().log(LogType.BOT, nick + " is SOP");
-				return true;
+			for (Mode m : modes) {
+				if (m.equals(Mode.FOUNDER) || m.equals(Mode.PROTECTED_OP)) {
+					return true;
+				}
 			}
+			break;
 		case OP:
-			if (modes.contains(Mode.OP)) {
-				Boot.getLogger().log(LogType.BOT, nick + " is OP");
-				return true;
+			for (Mode m : modes) {
+				if (m.equals(Mode.FOUNDER) || m.equals(Mode.PROTECTED_OP) || modes.contains(Mode.OP)) {
+					return true;
+				}
 			}
+			break;
 		case HALF_OP:
-			if (modes.contains(Mode.HALF_OP)) {
-				Boot.getLogger().log(LogType.BOT, nick + " is HOP");
-				return true;
+			for (Mode m : modes) {
+				if (m.equals(Mode.FOUNDER) || m.equals(Mode.PROTECTED_OP) || modes.contains(Mode.OP) || modes.contains(Mode.HALF_OP)) {
+					return true;
+				}
 			}
+			break;
 		case VOICE:
-			if (modes.contains(Mode.VOICE)) {
-				Boot.getLogger().log(LogType.BOT, nick + " is voice");
-				return true;
+			for (Mode m : modes) {
+				if (m.equals(Mode.FOUNDER) || m.equals(Mode.PROTECTED_OP) || modes.contains(Mode.OP) || modes.contains(Mode.HALF_OP) || modes.contains(Mode.VOICE)) {
+					return true;
+				}
 			}
 			break;
 		default:
