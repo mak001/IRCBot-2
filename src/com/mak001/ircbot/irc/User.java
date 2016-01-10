@@ -147,15 +147,15 @@ public class User {
 	 * 
 	 * @author MAK001
 	 */
-	public enum Mode {
+	public static enum Mode {
 		VOICE("v", "+"),
 		HALF_OP("h", "%"),
 		OP("o", "@"),
 		PROTECTED_OP("a", "&"),
 		FOUNDER("q", "~");
 
-		private String charCode;
-		private String symbolCode;
+		private final String charCode;
+		private final String symbolCode;
 
 		private Mode(String code, String symbol) {
 			charCode = code;
