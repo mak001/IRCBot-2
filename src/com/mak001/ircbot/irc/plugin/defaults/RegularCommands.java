@@ -122,8 +122,11 @@ public class RegularCommands extends Plugin {
 
 		@Override
 		public void onCommand(Server server, String channel, String sender, String login, String hostname, String additional) {
-			server.getChannelByName(channel).disableCommand(additional.replace(SettingsManager.getCommandPrefix(), ""));
-			server.sendMessage(channel, additional.replace(SettingsManager.getCommandPrefix(), "") + " has been disabled for " + channel);
+			if (server.getChannelByName(channel).disableCommand(additional.replace(SettingsManager.getCommandPrefix(), ""))) {
+				server.sendMessage(channel, additional.replace(SettingsManager.getCommandPrefix(), "") + " has been disabled for " + channel);
+			} else {
+				server.sendMessage(channel, additional.replace(SettingsManager.getCommandPrefix(), "") + " has failed to be disabled for " + channel);
+			}
 		}
 
 		@Override
@@ -136,8 +139,11 @@ public class RegularCommands extends Plugin {
 
 		@Override
 		public void onCommand(Server server, String channel, String sender, String login, String hostname, String additional) {
-			server.getChannelByName(channel).enableCommand(additional.replace(SettingsManager.getCommandPrefix(), ""));
-			server.sendMessage(channel, additional.replace(SettingsManager.getCommandPrefix(), "") + " has been re-enabled for " + channel);
+			if (server.getChannelByName(channel).enableCommand(additional.replace(SettingsManager.getCommandPrefix(), ""))) {
+				server.sendMessage(channel, additional.replace(SettingsManager.getCommandPrefix(), "") + " has been re-enabled for " + channel);
+			} else {
+				server.sendMessage(channel, additional.replace(SettingsManager.getCommandPrefix(), "") + " has failed to be re-enabled for " + channel);
+			}
 		}
 
 		@Override

@@ -199,6 +199,10 @@ public class PluginManager {
 		return commandManager.getAllCommands();
 	}
 
+	public Command getCommandByName(String name) {
+		return commandManager.getCommand(name);
+	}
+
 	public boolean onCommand(Server server, String channel, String sender, String login, String hostname, String message) {
 		boolean wasHelp = false;
 		if (message.toUpperCase().startsWith("HELP")) {
@@ -208,7 +212,6 @@ public class PluginManager {
 		Command command = commandManager.getCommand(message);
 		if (command == null || server.getChannelByName(channel).isDisabled(command)) {
 			// TODO - doesnt seem to work
-			//
 			return false;
 		}
 		if (bot.getPermissionHandler().getUser(sender).hasPermission(command.getPermission(), channel)) {

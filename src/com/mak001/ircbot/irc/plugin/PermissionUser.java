@@ -76,7 +76,6 @@ public class PermissionUser {
 
 	private boolean hasPermssionInChannel(String permission, String channel) {
 		RankPermission p = RankPermission.getEnum(permission);
-		Boot.getLogger().log(LogType.BOT, p.toString());
 
 		if (server == null) {
 			Boot.getLogger().log(LogType.BOT, "Server is null for " + nick);
@@ -84,6 +83,7 @@ public class PermissionUser {
 		}
 
 		User user = server.getChannelByName(channel).getUserByName(nick);
+
 		List<Mode> modes = user.getModes();
 		switch (p) {
 		case FOUNDER:

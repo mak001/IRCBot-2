@@ -258,29 +258,42 @@ public class Channel {
 	}
 
 	public boolean disableCommand(String command) {
-		if (Boot.getBot().getPluginManager().getCommands().keySet().contains(command)) {
-			return disabledCommands.add(command);
+		if (Boot.getBot().getPluginManager().getCommandByName(command) != null) {
+			Boot.getLogger().log(LogType.BOT, "disabled " + command + " on " + getName());
+			return disabledCommands.add(command.toUpperCase());
 		}
 		return false;
 	}
 
 	public boolean isDisabled(Command command) {
 		for (String s : command.getCommand()) {
-			if (disabledCommands.contains(s))
+			if (disabledCommands.contains(s.toUpperCase())) {
 				return true;
+			}
 		}
 		return false;
 	}
-	
+
 	public boolean isDisabled(String command) {
-		if (disabledCommands.contains(command))
-			return true;
+		Command c = Boot.getBot().getPluginManager().getCommandByName(command);
+		if (c != null) {
+			for (String s : c.getCommand()) {
+				if (disabledCommands.contains(s.toUpperCase())) {
+					return true;
+				}
+			}
+		}
 		return false;
 	}
-	
-	public boolean enableCommand(String command){
-		if (isDisabled(command)){
-			disabledCommands.remove(command);
+
+	public boolean enableCommand(String command) {
+		if (isDisabled(command)) {
+			Command c = Boot.getBot().getPluginManager().getCommandByName(command);
+			if (c != null) {
+				for (String s : c.getCommand()) {
+					disabledCommands.remove(s.toUpperCase());
+				}
+			}
 			return true;
 		}
 		return false;
