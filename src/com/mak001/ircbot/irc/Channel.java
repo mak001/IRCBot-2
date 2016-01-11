@@ -43,6 +43,7 @@ public class Channel {
 
 		try {
 			disabledCommands.addAll(SettingsManager.getDisabledCommands(server.getServerName(), name));
+			SettingsManager.save();
 		} catch (JSONException | IOException e) {
 			e.printStackTrace();
 		}
@@ -276,7 +277,13 @@ public class Channel {
 				return false;
 			}
 			Boot.getLogger().log(LogType.BOT, "disabled " + command + " on " + getName());
-			return disabledCommands.add(command.toUpperCase());
+			if (disabledCommands.add(command.toUpperCase())) {
+				try {
+					SettingsManager.save();
+				} catch (IOException e) {
+				}
+				return true;
+			}
 		}
 		return false;
 	}
@@ -305,12 +312,21 @@ public class Channel {
 	public boolean enableCommand(String command) {
 		if (isDisabled(command)) {
 			Command c = Boot.getBot().getPluginManager().getCommandByName(command);
+			boolean b = false;
 			if (c != null) {
 				for (String s : c.getCommand()) {
-					disabledCommands.remove(s.toUpperCase());
+					if (disabledCommands.remove(s.toUpperCase())) {
+						b = true;
+					}
 				}
 			}
-			return true;
+			if (b) {
+				try {
+					SettingsManager.save();
+				} catch (IOException e) {
+				}
+			}
+			return b;
 		}
 		return false;
 	}

@@ -10,6 +10,7 @@ import java.util.HashMap;
 
 import com.mak001.ircbot.Boot;
 import com.mak001.ircbot.IRCBot;
+import com.mak001.ircbot.SettingsManager;
 import com.mak001.ircbot.irc.io.InputThread;
 import com.mak001.ircbot.irc.io.Logger;
 import com.mak001.ircbot.irc.io.OutputThread;
@@ -105,12 +106,16 @@ public class Server {
 	}
 
 	/**
-	 * Removes an entire channel from our memory of users.
+	 * Removes an entire channel from our memory.
 	 */
 	public final void removeChannel(String channel) {
-		channel = channel.toLowerCase();
 		synchronized (channels) {
 			channels.remove(channel);
+			try {
+				SettingsManager.save();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -244,18 +249,22 @@ public class Server {
 
 	public void partChannel(String channel) {
 		leaveChannel("PART " + channel);
+		removeChannel(channel);
 	}
 
 	public void leaveChannel(String channel) {
 		output.sendRawLine("PART " + channel);
+		removeChannel(channel);
 	}
 
 	public void partChannel(String channel, String reason) {
 		leaveChannel("PART " + channel + " :" + reason);
+		removeChannel(channel);
 	}
 
 	public void leaveChannel(String channel, String reason) {
 		output.sendRawLine("PART " + channel + " :" + reason);
+		removeChannel(channel);
 	}
 
 	public void quit() {
