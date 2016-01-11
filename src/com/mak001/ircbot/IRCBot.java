@@ -230,6 +230,7 @@ public class IRCBot {
 				if (CHANNEL_PREFIXES.indexOf(target.charAt(0)) >= 0) {
 					onMode(server, target, sourceNick, sourceLogin, sourceHostname, mode);
 				} else {
+					// TODO
 					manager.triggerUserModeListeners(server, target, sourceNick, sourceLogin, sourceHostname, mode);
 				}
 				break;
@@ -240,9 +241,7 @@ public class IRCBot {
 
 			case "INVITE":
 				server.joinChannel(line.substring(line.indexOf(" :") + 2));
-				// TODO
-				// this.onInvite(server, target, sourceNick, sourceLogin,
-				// sourceHostname, line.substring(line.indexOf(" :") + 2));
+				manager.triggerInviteListeners(server, server.getNick(), sourceNick, sourceLogin, sourceHostname, line.substring(line.indexOf(" :") + 2));
 				break;
 
 			default: // Unknown
@@ -297,8 +296,6 @@ public class IRCBot {
 			int channelEndIndex = response.indexOf(" :");
 			String channel = response.substring(response.lastIndexOf(' ', channelEndIndex - 1) + 1, channelEndIndex);
 
-			// StringTokenizer tokenizer = new
-			// StringTokenizer(response.substring(response.indexOf(" :") + 2));
 			String[] data = response.substring(response.indexOf(" :") + 2).split("\\s");
 			for (int i = 0; i < data.length; i++) {
 				String nick = data[i];

@@ -13,6 +13,7 @@ import com.mak001.ircbot.api.Command;
 import com.mak001.ircbot.api.Plugin;
 import com.mak001.ircbot.api.listeners.ActionListener;
 import com.mak001.ircbot.api.listeners.CTCPListener;
+import com.mak001.ircbot.api.listeners.InviteListener;
 import com.mak001.ircbot.api.listeners.JoinListener;
 import com.mak001.ircbot.api.listeners.KickListener;
 import com.mak001.ircbot.api.listeners.MessageListener;
@@ -45,6 +46,7 @@ public class PluginManager {
 	private final List<PrivateMessageListener> privateMessageListeners = new ArrayList<PrivateMessageListener>();
 	private final List<QuitListener> quitListeners = new ArrayList<QuitListener>();
 	private final List<KickListener> kickListeners = new ArrayList<KickListener>();
+	private final List<InviteListener> inviteListeners = new ArrayList<InviteListener>();
 
 	public PluginManager(IRCBot bot) {
 		this.bot = bot;
@@ -59,6 +61,7 @@ public class PluginManager {
 		listeners.add(privateMessageListeners);
 		listeners.add(quitListeners);
 		listeners.add(kickListeners);
+		listeners.add(inviteListeners);
 
 		pluginLoader = new PluginLoader(this);
 		commandManager = new CommandManager();
@@ -309,6 +312,13 @@ public class PluginManager {
 	public void triggerKickListeners(Server server, String channel, String kickerNick, String kickerLogin, String kickerHostname, String recipientNick, String reason) {
 		for (KickListener listener : kickListeners) {
 			listener.onKick(server, channel, kickerNick, kickerLogin, kickerHostname, recipientNick, reason);
+		}
+	}
+
+	// TODO - remove substring??
+	public void triggerInviteListeners(Server server, String target, String sourceNick, String sourceLogin, String sourceHostname, String substring) {
+		for (InviteListener listener : inviteListeners) {
+			listener.onInvite(server, target, sourceNick, sourceLogin, sourceHostname, substring);
 		}
 	}
 

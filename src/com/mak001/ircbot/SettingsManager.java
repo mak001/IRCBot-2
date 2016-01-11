@@ -6,6 +6,8 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -14,6 +16,7 @@ import org.json.JSONObject;
 import com.mak001.ircbot.gui.SetUp;
 import com.mak001.ircbot.irc.Channel;
 import com.mak001.ircbot.irc.Server;
+import com.mak001.ircbot.irc.io.Logger.LogType;
 
 /**
  * The settings manager.
@@ -99,6 +102,33 @@ public final class SettingsManager {
 		}
 	}
 
+	public static List<String> getDisabledCommands(String server, String channel) throws JSONException, IOException {
+		List<String> disabledCommands = new ArrayList<String>();
+		if (SETTINGS_FILE.exists()) {
+
+			JSONObject obj = new JSONObject(getFileText(SETTINGS_FILE));
+			JSONArray networks = obj.getJSONArray(NETWORKS);
+			for (int i = 0; i < networks.length(); i++) {
+				JSONObject network = networks.getJSONObject(i);
+
+				if (network.getString(NETWORK_NAME).equalsIgnoreCase(server)) {
+
+					JSONArray channels = network.getJSONArray(CHANNELS);
+					for (int j = 0; j < channels.length(); j++) {
+						JSONObject chan = channels.getJSONObject(j);
+						if (chan.getString(CHANNEL_NAME).equalsIgnoreCase(channel)) {
+							JSONArray dcs = chan.getJSONArray(DISABLED_COMMANDS);
+							for (int k = 0; k < dcs.length(); k++) {
+								disabledCommands.add(dcs.getString(k));
+							}
+						}
+					}
+				}
+			}
+		}
+		return disabledCommands;
+	}
+
 	private static String getFileText(File file) throws IOException {
 		StringBuilder response = new StringBuilder();
 		BufferedReader input = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
@@ -160,7 +190,7 @@ public final class SettingsManager {
 	 * @throws IOException
 	 */
 	public static void save() throws IOException {
-
+		Boot.getLogger().log(LogType.BOT, "Saving general settings");
 		JSONObject obj = new JSONObject();
 		obj.put(COMMAND_PREFIX, prefix);
 

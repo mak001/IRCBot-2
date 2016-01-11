@@ -76,7 +76,7 @@ public class Server {
 	public final void addChannel(String channel) {
 		synchronized (channels) {
 			if (!channels.containsKey(channel)) {
-				channels.put(channel, new Channel(channel));
+				channels.put(channel, new Channel(this, channel));
 				this.joinChannel(channel);
 			}
 		}
@@ -85,7 +85,7 @@ public class Server {
 	public void addChannel(String channelName, String channelPass) {
 		synchronized (channels) {
 			if (!channels.containsKey(channelName)) {
-				channels.put(channelName, new Channel(channelName, channelPass));
+				channels.put(channelName, new Channel(this, channelName, channelPass));
 				this.joinChannel(channelName, channelPass);
 			}
 		}
@@ -228,7 +228,7 @@ public class Server {
 		if (output == null) {
 			tempchannels.put(channel, key);
 		} else {
-			channels.put(channel, new Channel(channel, key));
+			channels.put(channel, new Channel(this, channel, key));
 			output.sendRawLine("JOIN " + channel + " " + key);
 		}
 	}
@@ -237,7 +237,7 @@ public class Server {
 		if (output == null) {
 			tempchannels.put(channel, "");
 		} else {
-			channels.put(channel, new Channel(channel));
+			channels.put(channel, new Channel(this, channel));
 			output.sendRawLine("JOIN " + channel);
 		}
 	}

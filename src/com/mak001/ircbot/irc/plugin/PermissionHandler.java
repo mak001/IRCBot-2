@@ -15,6 +15,7 @@ import org.json.JSONObject;
 import com.mak001.ircbot.Boot;
 import com.mak001.ircbot.SettingsManager;
 import com.mak001.ircbot.irc.Server;
+import com.mak001.ircbot.irc.io.Logger.LogType;
 
 // TODO - make permissions be able to take wild cards
 public class PermissionHandler {
@@ -150,6 +151,7 @@ public class PermissionHandler {
 	 * @throws IOException
 	 */
 	public void save() throws IOException { // TODO
+		Boot.getLogger().log(LogType.BOT, "Saving permission settings");
 		JSONObject obj = new JSONObject();
 		JSONArray array = new JSONArray();
 		for (PermissionUser user : users) {

@@ -36,9 +36,9 @@ public interface ModeListener extends Listener {
 	 * @param sourceNick
 	 *            - The nick that set the mode
 	 * @param sourceLogin
-	 *            - The login of the user who changed thew channel mode
+	 *            - The login of the user who changed the mode
 	 * @param sourceHostname
-	 *            - The hostname of the user who changed the channel mode
+	 *            - The hostname of the user who changed the mode
 	 * @param mode
 	 *            - The mode that was changed
 	 */

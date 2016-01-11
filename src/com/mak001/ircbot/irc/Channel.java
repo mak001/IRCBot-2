@@ -1,10 +1,14 @@
 package com.mak001.ircbot.irc;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.json.JSONException;
+
 import com.mak001.ircbot.Boot;
+import com.mak001.ircbot.SettingsManager;
 import com.mak001.ircbot.api.Command;
 import com.mak001.ircbot.irc.io.Logger.LogType;
 
@@ -26,15 +30,20 @@ public class Channel {
 
 	private String topic;
 
-	public Channel(String name) {
-		this(name, "");
+	public Channel(Server server, String name) {
+		this(server, name, "");
 	}
 
-	public Channel(String name, String key) {
+	public Channel(Server server, String name, String key) {
 		PREFIX = name.charAt(0);
 		NAME = name;
 		PASS = key;
-		// TODO Auto-generated constructor stub
+
+		try {
+			disabledCommands.addAll(SettingsManager.getDisabledCommands(server.getServerName(), name));
+		} catch (JSONException | IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public void setTopic(String topic) {

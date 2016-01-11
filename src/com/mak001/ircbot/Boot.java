@@ -3,6 +3,7 @@ package com.mak001.ircbot;
 import java.io.IOException;
 
 import com.mak001.ircbot.irc.io.Logger;
+import com.mak001.ircbot.irc.io.Logger.LogType;
 
 public class Boot {
 
@@ -22,8 +23,10 @@ public class Boot {
 			@Override
 			public void run() {
 				try {
+					logger.log(LogType.BOT, "Shutting down");
 					bot.getPermissionHandler().save();
 					SettingsManager.save();
+					logger.log(LogType.BOT, "Saving complete");
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
