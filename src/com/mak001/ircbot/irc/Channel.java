@@ -11,6 +11,8 @@ import com.mak001.ircbot.Boot;
 import com.mak001.ircbot.SettingsManager;
 import com.mak001.ircbot.api.Command;
 import com.mak001.ircbot.irc.io.Logger.LogType;
+import com.mak001.ircbot.irc.plugin.defaults.Permissions;
+import com.mak001.ircbot.irc.plugin.defaults.RegularCommands;
 
 /**
  * A channel object. Used to store the channel name, prefix and a list of users
@@ -268,6 +270,11 @@ public class Channel {
 
 	public boolean disableCommand(String command) {
 		if (Boot.getBot().getPluginManager().getCommandByName(command) != null) {
+			if (!(Boot.getBot().getPluginManager().getCommandByName(command).getParentPlugin() instanceof RegularCommands)
+					&& !(Boot.getBot().getPluginManager().getCommandByName(command).getParentPlugin() instanceof Permissions)) {
+				Boot.getLogger().log(LogType.BOT, "Cannot disbale a default command");
+				return false;
+			}
 			Boot.getLogger().log(LogType.BOT, "disabled " + command + " on " + getName());
 			return disabledCommands.add(command.toUpperCase());
 		}
