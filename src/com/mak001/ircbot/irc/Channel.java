@@ -270,8 +270,8 @@ public class Channel {
 
 	public boolean disableCommand(String command) {
 		if (Boot.getBot().getPluginManager().getCommandByName(command) != null) {
-			if (!(Boot.getBot().getPluginManager().getCommandByName(command).getParentPlugin() instanceof RegularCommands)
-					&& !(Boot.getBot().getPluginManager().getCommandByName(command).getParentPlugin() instanceof Permissions)) {
+			if (Boot.getBot().getPluginManager().getCommandByName(command).getParentPlugin() instanceof RegularCommands
+					|| Boot.getBot().getPluginManager().getCommandByName(command).getParentPlugin() instanceof Permissions) {
 				Boot.getLogger().log(LogType.BOT, "Cannot disbale a default command");
 				return false;
 			}
