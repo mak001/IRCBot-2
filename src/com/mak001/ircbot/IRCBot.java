@@ -18,9 +18,9 @@ import com.mak001.ircbot.irc.plugin.defaults.RegularCommands;
 
 public class IRCBot {
 
-	public final static String ident = "Mak001s.bot.v2";
+	public final static String ident = "JIZZ.V2";
 	public static final String CHANNEL_PREFIXES = "#&+!";
-	public static final String VERSION = "2.001";
+	public static final String VERSION = "2.0.1";
 
 	private PermissionHandler permissionHandler;
 	private PluginManager manager;

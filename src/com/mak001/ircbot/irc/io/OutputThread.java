@@ -35,11 +35,11 @@ public class OutputThread extends Thread {
 	public void run() {
 		try {
 			while (running == true || queue.hasNext()) {
-				Thread.sleep(delay);
 
 				String line = (String) queue.next();
 				if (line != null) {
 					sendLine(line);
+					Thread.sleep(delay);
 				} else {
 					running = false;
 				}

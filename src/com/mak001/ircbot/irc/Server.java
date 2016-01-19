@@ -13,6 +13,7 @@ import com.mak001.ircbot.IRCBot;
 import com.mak001.ircbot.SettingsManager;
 import com.mak001.ircbot.irc.io.InputThread;
 import com.mak001.ircbot.irc.io.Logger;
+import com.mak001.ircbot.irc.io.Logger.LogType;
 import com.mak001.ircbot.irc.io.OutputThread;
 
 public class Server {
@@ -74,24 +75,6 @@ public class Server {
 		}
 	}
 
-	public final void addChannel(String channel) {
-		synchronized (channels) {
-			if (!channels.containsKey(channel)) {
-				channels.put(channel, new Channel(this, channel));
-				this.joinChannel(channel);
-			}
-		}
-	}
-
-	public void addChannel(String channelName, String channelPass) {
-		synchronized (channels) {
-			if (!channels.containsKey(channelName)) {
-				channels.put(channelName, new Channel(this, channelName, channelPass));
-				this.joinChannel(channelName, channelPass);
-			}
-		}
-	}
-
 	public void removeAllChannels() {
 		synchronized (channels) {
 			channels.clear();
@@ -138,10 +121,6 @@ public class Server {
 		changeNick(botNick);
 		output.sendRawLine("USER " + "MAK001s.BOT" + " 8 * :" + "Mak001's bot v2.01");
 
-		if (botPassword != null && !botPassword.equals("")) {
-			identify(botPassword);
-		}
-
 		// TODO - re-write
 		// Read stuff back from the server to see if we connected.
 		String line = null;
@@ -156,6 +135,9 @@ public class Server {
 				String code = line.substring(firstSpace + 1, secondSpace);
 
 				if (code.equals("004")) {
+					if (botPassword != null && !botPassword.equals("")) {
+						identify(botPassword);
+					}
 					// We're connected to the server.
 					break;
 				} else if (code.equals("433")) {
@@ -183,9 +165,9 @@ public class Server {
 			for (String chan : tempchannels.keySet()) {
 				String key = tempchannels.get(chan);
 				if (key == null || key.equals("")) {
-					joinChannel(chan);
+					joinChannel(chan, true);
 				} else {
-					joinChannel(chan, key);
+					joinChannel(chan, key, true);
 				}
 			}
 		}
@@ -230,19 +212,37 @@ public class Server {
 	}
 
 	public void joinChannel(String channel, String key) {
+		joinChannel(channel, key, false);
+	}
+
+	private void joinChannel(String channel, String key, boolean startup) {
 		if (output == null) {
-			tempchannels.put(channel, key);
+			synchronized (tempchannels) {
+				tempchannels.put(channel, key);
+				Boot.getLogger().log(LogType.BOT, "Added channel " + channel + " to join queue");
+			}
 		} else {
-			channels.put(channel, new Channel(this, channel, key));
+			synchronized (channels) {
+				channels.put(channel, new Channel(this, channel, key, startup));
+			}
 			output.sendRawLine("JOIN " + channel + " " + key);
 		}
 	}
 
 	public void joinChannel(String channel) {
+		joinChannel(channel, false);
+	}
+
+	public void joinChannel(String channel, boolean startup) {
 		if (output == null) {
-			tempchannels.put(channel, "");
+			synchronized (tempchannels) {
+				tempchannels.put(channel, "");
+				Boot.getLogger().log(LogType.BOT, "Added channel " + channel + " to join queue");
+			}
 		} else {
-			channels.put(channel, new Channel(this, channel));
+			synchronized (channels) {
+				channels.put(channel, new Channel(this, channel, startup));
+			}
 			output.sendRawLine("JOIN " + channel);
 		}
 	}

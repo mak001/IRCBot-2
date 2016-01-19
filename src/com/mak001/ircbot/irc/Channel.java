@@ -36,14 +36,24 @@ public class Channel {
 		this(server, name, "");
 	}
 
+	public Channel(Server server, String name, boolean startup) {
+		this(server, name, "", startup);
+	}
+
 	public Channel(Server server, String name, String key) {
+		this(server, name, key, false);
+	}
+
+	public Channel(Server server, String name, String key, boolean startup) {
 		PREFIX = name.charAt(0);
 		NAME = name;
 		PASS = key;
 
 		try {
 			disabledCommands.addAll(SettingsManager.getDisabledCommands(server.getServerName(), name));
-			SettingsManager.save();
+			if (!startup) {
+				SettingsManager.save();
+			}
 		} catch (JSONException | IOException e) {
 			e.printStackTrace();
 		}

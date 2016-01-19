@@ -90,10 +90,11 @@ public final class SettingsManager {
 
 				JSONArray channels = network.getJSONArray(CHANNELS);
 				for (int j = 0; j < channels.length(); j++) {
-					JSONObject channel = channels.getJSONObject(i);
+					JSONObject channel = channels.getJSONObject(j);
 					String channelName = channel.getString(CHANNEL_NAME);
+					Boot.getLogger().log(LogType.BOT, "Adding " + channelName + " to join queue");
 					String channelPass = channel.getString(CHANNEL_PASS);
-					Boot.getBot().getServer(serverName).addChannel(channelName, channelPass);
+					Boot.getBot().getServer(serverName).joinChannel(channelName, channelPass);
 				}
 			}
 		} else {
@@ -175,7 +176,7 @@ public final class SettingsManager {
 
 				try {
 					Boot.getBot().addServer(new Server(Boot.getBot(), u_name, u_pass, network, 6667));
-					Boot.getBot().getServer(network).addChannel(channel);
+					Boot.getBot().getServer(network).joinChannel(channel);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}

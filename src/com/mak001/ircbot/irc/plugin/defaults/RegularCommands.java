@@ -79,9 +79,9 @@ public class RegularCommands extends Plugin {
 		public void onCommand(Server server, String channel, String sender, String login, String hostname, String additional) {
 			if (!additional.contains(" ")) {
 				if (isChannel(additional)) {
-					server.addChannel(additional);
+					server.joinChannel(additional);
 				} else {
-					server.addChannel("#" + additional);
+					server.joinChannel("#" + additional);
 				}
 			} else {
 				server.sendMessage(sender, additional + " is not a valid channel");
