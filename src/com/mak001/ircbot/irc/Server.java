@@ -70,8 +70,7 @@ public class Server {
 
 	public Channel getChannelByName(String chan) {
 		synchronized (channels) {
-			// return channels.get(chan);
-			return channels.get(chan.replace("[" + IRCBot.CHANNEL_PREFIXES + "]+", ""));
+			return channels.get(chan.toUpperCase());
 		}
 	}
 
@@ -83,8 +82,8 @@ public class Server {
 
 	public final void addUser(User user, String channel) {
 		synchronized (channels) {
-			if (channels.containsKey(channel))
-				channels.get(channel).addUser(user);
+			if (channels.containsKey(channel.toUpperCase()))
+				channels.get(channel.toUpperCase()).addUser(user);
 		}
 	}
 
@@ -93,7 +92,7 @@ public class Server {
 	 */
 	public final void removeChannel(String channel) {
 		synchronized (channels) {
-			channels.remove(channel);
+			channels.remove(channel.toUpperCase());
 			try {
 				SettingsManager.save();
 			} catch (IOException e) {
@@ -223,9 +222,9 @@ public class Server {
 			}
 		} else {
 			synchronized (channels) {
-				channels.put(channel, new Channel(this, channel, key, startup));
+				channels.put(channel.toUpperCase(), new Channel(this, channel, key, startup));
+				output.sendRawLine("JOIN " + channel + " " + key);
 			}
-			output.sendRawLine("JOIN " + channel + " " + key);
 		}
 	}
 
@@ -241,9 +240,9 @@ public class Server {
 			}
 		} else {
 			synchronized (channels) {
-				channels.put(channel, new Channel(this, channel, startup));
+				channels.put(channel.toUpperCase(), new Channel(this, channel, startup));
+				output.sendRawLine("JOIN " + channel);
 			}
-			output.sendRawLine("JOIN " + channel);
 		}
 	}
 
@@ -295,5 +294,10 @@ public class Server {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	public void timedOut() {
+		// TODO Auto-generated method stub
+		log("Pinged out.");
 	}
 }

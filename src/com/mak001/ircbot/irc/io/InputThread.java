@@ -16,11 +16,13 @@ public class InputThread extends Thread {
 	private BufferedReader reader;
 	private Server server;
 	private boolean running = true;
+	private long lastMessageTime = 0;
 
 	public InputThread(IRCBot bot, Server server, BufferedReader reader) {
 		this.bot = bot;
 		this.reader = reader;
 		this.server = server;
+		lastMessageTime = System.currentTimeMillis();
 	}
 
 	@Override
@@ -28,10 +30,16 @@ public class InputThread extends Thread {
 		try {
 			while (running) {
 				try {
+
+					if (System.currentTimeMillis() - lastMessageTime >= 240000) {
+						server.timedOut();
+					}
+
 					String line = null;
 					while ((line = reader.readLine()) != null) {
 						try {
 							Boot.getLogger().log(Logger.LogType.IRC, ">" + line);
+							lastMessageTime = System.currentTimeMillis();
 							bot.handleLine(server, line);
 						} catch (Throwable t) {
 							StringWriter sw = new StringWriter();
