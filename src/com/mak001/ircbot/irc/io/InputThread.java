@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.InterruptedIOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.SocketException;
 
 import com.mak001.ircbot.Boot;
 import com.mak001.ircbot.IRCBot;
@@ -16,13 +17,11 @@ public class InputThread extends Thread {
 	private BufferedReader reader;
 	private Server server;
 	private boolean running = true;
-	private long lastMessageTime = 0;
 
 	public InputThread(IRCBot bot, Server server, BufferedReader reader) {
 		this.bot = bot;
 		this.reader = reader;
 		this.server = server;
-		lastMessageTime = System.currentTimeMillis();
 	}
 
 	@Override
@@ -31,15 +30,10 @@ public class InputThread extends Thread {
 			while (running) {
 				try {
 
-					if (System.currentTimeMillis() - lastMessageTime >= 240000) {
-						server.timedOut();
-					}
-
 					String line = null;
 					while ((line = reader.readLine()) != null) {
 						try {
 							Boot.getLogger().log(Logger.LogType.IRC, ">" + line);
-							lastMessageTime = System.currentTimeMillis();
 							bot.handleLine(server, line);
 						} catch (Throwable t) {
 							StringWriter sw = new StringWriter();
@@ -57,12 +51,16 @@ public class InputThread extends Thread {
 					}
 					if (line == null) {
 						running = false;
+						server.timedOut();
 					}
 				} catch (InterruptedIOException iioe) {
 					server.getOutputThread().sendRawLine("PING " + (System.currentTimeMillis() / 1000));
 				}
 			}
+		} catch (SocketException se) {
+			server.timedOut();
 		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 

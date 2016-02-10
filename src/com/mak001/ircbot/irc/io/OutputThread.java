@@ -27,6 +27,7 @@ public class OutputThread extends Thread {
 				writer.flush();
 				Boot.getLogger().log(Logger.LogType.IRC, ">>>" + line);
 			} catch (Exception e) {
+				e.printStackTrace();
 			}
 		}
 	}

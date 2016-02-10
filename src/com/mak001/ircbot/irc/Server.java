@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.InterruptedIOException;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.util.HashMap;
@@ -105,7 +106,12 @@ public class Server {
 		log("Creating socket");
 		if (socket != null && !socket.isClosed())
 			return;
-		socket = new Socket(host, port);
+		try {
+			socket = new Socket(host, port);
+			socket.setSoTimeout(24000);
+		} catch (InterruptedIOException e) {
+			timedOut();
+		}
 		BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 		output = new OutputThread(writer);
@@ -215,15 +221,19 @@ public class Server {
 	}
 
 	private void joinChannel(String channel, String key, boolean startup) {
-		if (output == null) {
-			synchronized (tempchannels) {
-				tempchannels.put(channel, key);
-				Boot.getLogger().log(LogType.BOT, "Added channel " + channel + " to join queue");
-			}
+		if (key == null) {
+			joinChannel(channel, startup);
 		} else {
-			synchronized (channels) {
-				channels.put(channel.toUpperCase(), new Channel(this, channel, key, startup));
-				output.sendRawLine("JOIN " + channel + " " + key);
+			if (output == null) {
+				synchronized (tempchannels) {
+					tempchannels.put(channel, key);
+					Boot.getLogger().log(LogType.BOT, "Added channel " + channel + " to join queue");
+				}
+			} else {
+				synchronized (channels) {
+					channels.put(channel.toUpperCase(), new Channel(this, channel, key, startup));
+					output.sendRawLine("JOIN " + channel + " " + key);
+				}
 			}
 		}
 	}
@@ -295,9 +305,30 @@ public class Server {
 			e.printStackTrace();
 		}
 	}
-
+	
 	public void timedOut() {
-		// TODO Auto-generated method stub
-		log("Pinged out.");
+		try {
+			timedOut(0);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void timedOut(int num) throws InterruptedException  {
+		log("Pinged out. Trying to reconnect....");
+		log("attempting to delay for " + (num * 5) + " seconds.");
+		Thread.sleep(num * 5000);
+		try {
+			input.dispose();
+			output.dispose();
+			socket.close();
+			connect();
+
+			for (Channel chan : channels.values()) {
+				joinChannel(chan.getName(), chan.getPass());
+			}
+		} catch (Exception e) {
+			timedOut(num + 1);
+		}
 	}
 }
