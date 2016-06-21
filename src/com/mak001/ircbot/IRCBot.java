@@ -1,6 +1,5 @@
 package com.mak001.ircbot;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -426,13 +425,8 @@ public class IRCBot {
 	}
 
 	public void shutDown(Server server, String sender) {
-		try {
-			SettingsManager.save();
-			permissionHandler.save();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 		for (Server s : servers.values()) {
+			Boot.getLogger().log(Logger.LogType.BOT, "Shutting down server: " + s.getServerName());
 			s.quit("Shutdown requested by " + sender + " from " + server.getServerName());
 			s.dispose();
 		}

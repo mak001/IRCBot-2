@@ -17,6 +17,7 @@ public class InputThread extends Thread {
 	private BufferedReader reader;
 	private Server server;
 	private boolean running = true;
+	private boolean timeoutDisabled = false;
 
 	public InputThread(IRCBot bot, Server server, BufferedReader reader) {
 		this.bot = bot;
@@ -51,14 +52,18 @@ public class InputThread extends Thread {
 					}
 					if (line == null) {
 						running = false;
-						server.timedOut();
+						if (!timeoutDisabled) {
+							server.timedOut();
+						}
 					}
 				} catch (InterruptedIOException iioe) {
 					server.getOutputThread().sendRawLine("PING " + (System.currentTimeMillis() / 1000));
 				}
 			}
 		} catch (SocketException se) {
-			server.timedOut();
+			if (!timeoutDisabled) {
+				server.timedOut();
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -66,5 +71,10 @@ public class InputThread extends Thread {
 
 	public void dispose() {
 		running = false;
+		timeoutDisabled = true;
+	}
+
+	public void disableTimeOut() {
+		timeoutDisabled = true;
 	}
 }

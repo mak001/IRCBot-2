@@ -102,7 +102,7 @@ public class Server {
 		}
 	}
 
-	public void connect() throws Exception {
+	public void connect() throws Exception  {
 		log("Creating socket");
 		if (socket != null && !socket.isClosed())
 			return;
@@ -298,6 +298,14 @@ public class Server {
 
 	public void dispose() {
 		output.dispose();
+		while(output.isAlive()) {
+			try {
+				Thread.sleep(200);
+			} catch (InterruptedException e1) {
+				e1.printStackTrace();
+			}
+		}
+		input.disableTimeOut();
 		input.dispose();
 		try {
 			socket.close();
